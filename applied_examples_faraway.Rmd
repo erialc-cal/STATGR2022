@@ -1,0 +1,65 @@
+---
+title: "Applied Exercises"
+output: html_document
+date: "2022-10-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r pressure, echo=FALSE}
+#install.packages("faraway")
+#install.packages("HistData")
+library(faraway, HistData)
+library(ggplot2)
+library(GGally)
+```
+# Lecture 1 
+1. Dataset $\mathtt{teengamb}$ of teenage gambling in the UK. Make graphical and numerical summary of the data, commenting on any interesting features. 
+
+```{r, echo=FALSE}
+data(teengamb, package="faraway")
+summary(teengamb)
+```
+From the summary, we see that sex is a binary variable, income, status (socio-economic status based on parents) and gamble are continuous and verbal (verbal test that captures education level) is discrete. 
+```{r, echo=FALSE}
+ggpairs(teengamb)
+```
+In our reading of these graphics, we will consider our parameter of interest the amount of gambling of individuals. This scatterplot of our variables indicates us that gambling is an occupation in which men tend to gamble higher amounts than women, so there might be an effect of sex on the amount of gambling. There seems to be an effect of income on gambling amounts, the higher the income, the higher the amount gambled. Also, for teenagers of lower status, there is a wider range of amount gambled whereas for teenagers of higher status, the range of gamble is smaller, and the amount of money gambled is also lower. Finally, the education compound seems to shows that the better-spoken the person is, the lower the amount of gambling seems to be. 
+We might want to do a linear regression to corroborate our observations. 
+
+
+```{r}
+model1 <- lm(gamble ~., data=teengamb)
+summary(model1)
+```
+Regression on the full model yields that only income is a significant variable at level 0.1\%. We read that on average, an increase in one pound per week of income increases the expenditure on gambling of 4.96 pounds per year, all other things fixed. 
+
+We can also see that for the simpler model, we get by regressing income on gambling expenditures that a such increase yields a 5.52\$ per year of gambling expenditure. 
+```{r}
+plot(gamble ~income, teengamb)
+abline(coef(lm(gamble ~income, teengamb)))
+summary(lm(gamble~income, teengamb))
+```
+
+2. 
+```{r}
+data(uswages, package='faraway')
+pairs(uswages)
+summary(uswages)
+```
+We see that {race, smsa, ne, mw, so, we, pt} are binary variables, {wage, educ, exper} are continuous. This is a bigger dataset so such a scatterplot isn't fit to showcase relationship between variables. However we can try to explain wage variations with continuous socioeconomic variables such as education and experience. 
+
+```{r}
+ggpairs(uswages, columns = c('educ', 'exper','wage'))
+```
+Our scatterplot indicates that there might be a relationship between wage and education. Longer years in education seems to contribute to higher wages. However, it also seems there's more variability in wages for individuals who spend more time in studying. We can also note a few outliers in wages. The relationship between wages and experience seems less straightforward. It doesn't seem that experience has that a lot of influence on wage, even we can see that for people with more than forty years of experience, the wages seem to be lower than for people with experience of less than 40 years. There seems to be still a slight influence on early years: wage increases with experience for the first 5 years. 
+```{r, echo=FALSE}
+model <- lm(wage~educ+exper, data=uswages)
+summary(model)
+edu <- ggplot(uswages, aes(educ, wage))
+exp <- ggplot(uswages, aes(exper, wage))
+edu + geom_point(color='blue', alpha=0.3)+geom_abline(aes(intercept=coef(model)[1], slope=coef(model)[2])); 
+exp + geom_point(color='red', alpha=0.3) +geom_abline(aes(intercept=coef(model)[1], slope=coef(model)[2]))
+```
+The linear model indicates that are explanatory power isn't strong, $R^2= 0.1351$. However, both variables are significant in explaining changes in wages. We read that the baseline mean wage is -242.7994\$ in 1988 (for individuals with no education and no experience) which doesn't make much sense here. However, we can explain wages in term of education and experience: at fixed experience level, one additional year of education increases by 51.1753\$ the weekly wage of US male workers in 1988 and at fixed education, one additional year of experience increases by 9.7748\$ the weekly wage. 
