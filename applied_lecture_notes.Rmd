@@ -172,7 +172,7 @@ Remark: many problems with t-value, needs *normality* and *independence*. Howeve
 ### ANOVA
 - Decomposition of variation: recall in Galton's example, we see variance introduced by parent's height and intrinsic variance 
 ![When $x$ is not known, the best predictor of $y$ is $\bar{y}$ and the variation is denoted by the dotted line. When $x$ is known, we can predict $y$ more accurately by the solid line. $R^2$ is related to the ratio of these two variances.
-](/Users/h2jw/Documents/GitHub/R/applied_lecture_notes_files/galton.png)
+](/Users/h2jw/Documents/GitHub/R/STATGR6101/applied_lecture_notes_files/galton.png)
 
 We use analysis of variance: 
 $$ \underbrace{\sum_i(y_i - \bar{y})^2}_{SST} = \underbrace{\sum_i(y_i - \hat{y})^2}_{SSE} + \underbrace{\sum_i(\hat{y}_i - \bar{y})^2}_{SSR}  $$
@@ -188,7 +188,7 @@ Note that for SLR, $R^2 = \rho_{X,Y}^2$.
 $R^2$ gives an idea of how much information our predictors give to our response: goodness of fit. However, there is no "threshold" value for a good $R^2$. 
 
 ![Four simulated
-datasets where $R^2$ is about 0.65. The plot on the upper left is well-behaved for $R^2$. In the plot on the upper right, the residual variation is smaller than the first plot but the variation in $x$ is also smaller so $R^2$ is about the same. In the plot on the lower left, the fit looks strong except for a couple of outliers while on the lower right, the relationship is quadratic.](/Users/h2jw/Documents/GitHub/R/applied_lecture_notes_files/R2_comp.png)
+datasets where $R^2$ is about 0.65. The plot on the upper left is well-behaved for $R^2$. In the plot on the upper right, the residual variation is smaller than the first plot but the variation in $x$ is also smaller so $R^2$ is about the same. In the plot on the lower left, the fit looks strong except for a couple of outliers while on the lower right, the relationship is quadratic.](/Users/h2jw/Documents/GitHub/R/STATGR6101/applied_lecture_notes_files/R2_comp.png)
 
 We can also rewrite F-test in terms of $SSE$, $SSR$: note that $SSE \sim \sigma^2 \chi_{n-2}^2$, $SSR \sim  \sigma^2 \chi_1^2$ with $SSE \perp SSR$. Then the F-test for $H_0 : \beta = 0$ :
 $$ F = \frac{SSR}{SSE/(n-2)} \sim F_{1,n-2}$$
@@ -630,13 +630,13 @@ hist(boot.model2, layout=c(2,2))
 ```
 
 ### Bootstrap with other stats 
-```{r}
-onlibrary(boot)
+<!-- ```{r}
+library(boot)
 my.data <- marketing %>% mutate( fitted= fitted(fit), resid= resid(fit))
 # We are adding two variables 
 my.stat <-
 
 
-boot.model <- boot(my.data, my.stat, R=1000)
-```
+boot.model <- boot(my.data, my.stat, R=1000) 
+```--> 
 
