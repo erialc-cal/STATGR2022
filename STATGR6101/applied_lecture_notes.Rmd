@@ -757,3 +757,127 @@ my.stat <-
 
 boot.model <- boot(my.data, my.stat, R=1000) 
 ```- - > 
+
+
+
+
+
+
+
+# Lecture 9
+Recap on Bootstrap:
+
+- bootstrap: sample new $(X,Y)$ from original sample
+
+- residual bootstrap: $X$ is fixed, what is a sample? How do we sample the joint $(X,Y)$ then? Makes no sense to sample our $X$s, the random part is in the residuals, so we need to sample through the residuals. We run a regression and from the residuals we can sample from them new independent residuals. 
+```{r}
+library(boot)
+library(datarium)
+```
+
+When does bootstrap work? This is a tricky question, see theoretical stats course. In general if the problem is small scaled, it works (large asymptotics assumptions hold).
+
+## Variable selection 
+Challenge of not having enough covariates --> Simpson's paradox etc. 
+Challenge of having too many covariates --> too many coeff to estimates so not ideal for predictions. 
+
+### PGA data 
+25 obs. 5 covar. response: score
+
+```{r}
+library(Rlab)
+pga = data(golf, package='Rlab')
+lm(score ~ ., data = golf)
+```
+See that 'sand' is not a significant variable, want to drop it.
+Re-run regression, coefficients changed. How to assess better model? Bias-variance tradeoff, including too many variables increases the variance and drags down the significance of the variables.
+```{r}
+#lm(score ~ drive+fair+green+putt, data = pga)
+```
+
+ **Available techniques**
+
+- Classical approaches:
+  - test based
+  - information criteria
+- Bayesian approaches:  
+  - through posterior probability
+  - stochastic search
+  - empirical bayes
+- Regularization approaches
+  - non negative garrote, LASSO
+  - Elastic net, Scad...
+
+
+
+### Hypothesis testing based approaches
+In cases of nested models $\mathcal{M}_1 \subset \mathcal{M}_2 \subset ... \subset \mathcal{M}_n  $ like in variable selection where subsequent models are strictly smaller and included in the full/previous model, can write sequence of hypothesis $H_{j0}: \mathcal{M}_j \text{  is true }$ vs $H_{ja}: \mathcal{M}_{j+1} \text{ is true }$
+
+For two models, just run a F-test and if null hypothesis is rejected take the bigger model. 
+
+For more than two models, tricker, run tests sequentially, two approaches.
+
+\begin{eqnarray*}  
+H_{p0}: Z(t) ~ Z(t-1) & \cdots & Z(t-(p-1)) \\
+H-{pa}:Z(t) ~ Z(t-1) & \cdots & Z(t-p) \\
+& \vdots & \\
+H_{j0}: Z(t) ~ Z(t-1) & \cdots & Z(t-(j-1)) \\
+H-{ja}:Z(t) ~ Z(t-1) & \cdots & Z(t-j) \\
+\end{eqnarray*}
+
+
+
+#### Forward selection
+Run test from first to last, if $\mathcal{M}_1$ isnt rejected, choose, else, move on to the next and test... 
+we are gradually adding complexity to the model
+
+#### Backward elimination
+Start with largest possible model $\mathcal{M}_n$, compared to the simpler $\mathcal{M}_{n-1}$ if we don't have evidence against one of the variable, take it out and choose the $\mathcal{M}_{n-1}$
+
+Both methods don't necessarily result in the same selection. How do we choose which method to choose?
+If you have a large dataset, backwards selection is preferrable. Including a lot of variables is including more noise, and eliminating some variables is likely to be eliminating the estimation of noise.  
+
+####  Stepwise regression
+Stepwise regression is a procedure that goes both direction. However it still depends on whether we start with the full model or the null model. Depending on how we search through a discrete space, we are going to end up in a different spot. There is no guarantee of reaching the global optimal. 
+
+
+What about multiple comparison? Looking at each pvalues, we are setting a rigid backdrop for each hypothesis test, looking accross the hypothesis tests is a tricky question. 
+
+See slides, with backward selection, get 4 variables, with forward selection get 2. 
+
+#### Best subset 
+Across all models, models are not nested anymore, hyothesis testing is not possible. How do we choose the best model now? Evaluate which model fits the data best. $R^2$ ? But here, the largest model is always come out best because we can always explain more variation with more variables. We turn to an adjusted $R^2$. 
+
+Issue in $R^2 = \frac{SSE}{SST}$ through $SSE$, then adjust through the DF $adj. R^2 = 1- \frac{SSE/(n-|\mathcal{M}|)}{SST/(n-1)}$.
+
+However, adjusted $R^2$ rarely work and has difficult interpretation, what is a better criteria? 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
