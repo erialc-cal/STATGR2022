@@ -205,7 +205,7 @@ Remark: many problems with t- value, needs *normality* and *independence*. Howev
 Decomposition of variation: recall in Galton's example, we see variance introduced by parent's height and intrinsic variance.
 
 ![When $x$ is not known, the best predictor of $y$ is $\bar{y}$ and the variation is denoted by the dotted line. When $x$ is known, we can predict $y$ more accurately by the solid line. $R^2$ is related to the ratio of these two variances.
-](/Users/h2jw/Documents/GitHub/STATGRXXXX/STATGR6101/images/galton.png)
+](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/galton.png)
 
 We use analysis of variance: 
 $$\underbrace{\sum_i(y_i- \bar{y})^2}_{SST}=\underbrace{\sum_i(y_i- \hat{y})^2}_{SSE}+\underbrace{\sum_i(\hat{y}_i- \bar{y})^2}_{SSR}$$
@@ -223,7 +223,7 @@ Note that for SLR, $R^2=\rho_{X,Y}^2$.
 $R^2$ gives an idea of how much information our predictors give to our response: goodness of fit. However, there is no "threshold" value for a good $R^2$. 
 
 ![Four simulated
-datasets where $R^2$ is about 0.65. The plot on the upper left is well- behaved for $R^2$. In the plot on the upper right, the residual variation is smaller than the first plot but the variation in $x$ is also smaller so $R^2$ is about the same. In the plot on the lower left, the fit looks strong except for a couple of outliers while on the lower right, the relationship is quadratic.](/Users/h2jw/Documents/GitHub/STATGRXXXX/STATGR6101/images/R2_comp.png)
+datasets where $R^2$ is about 0.65. The plot on the upper left is well- behaved for $R^2$. In the plot on the upper right, the residual variation is smaller than the first plot but the variation in $x$ is also smaller so $R^2$ is about the same. In the plot on the lower left, the fit looks strong except for a couple of outliers while on the lower right, the relationship is quadratic.](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/R2_comp.png)
 
 We can also rewrite F- test in terms of $SSE$, $SSR$: note that $SSE\sim\sigma^2\chi_{n- 2}^2$, $SSR\sim\sigma^2\chi_1^2$ with $SSE\perp SSR$. Then the F- test for $H_0 :\beta=0$ :
 $$F=\frac{SSR}{SSE/(n- 2)}\sim F_{1,n- 2}$$
@@ -434,7 +434,7 @@ Note: projection properties of $E(Y|X)=X\beta$.
 
 
 *Summary of 4,5* 
-![](/Users/h2jw/Documents/GitHub/STATGRXXXX/STATGR6101/images/resume45.png)
+![](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/resume45.png)
 
 # Lecture 6: Diagnostics
 
@@ -748,16 +748,26 @@ hist(boot.model2, layout=c(2,2))
 ```
 
 ### Bootstrap with other stats 
-<!- - ```{r, echo=FALSE}
+```{r, echo=FALSE}
 library(boot)
-my.data <- marketing %>% mutate( fitted=fitted(fit), resid=resid(fit))
+library(dplyr)
+fit <- lm(sales ~., data=marketing)
+my.data <- marketing %>% mutate(fitted=fitted(fit), resid=resid(fit))
 # We are adding two variables 
-my.stat <- 
+my.stat <- function(sample.data, indices){
+  data.star <- sample.data %>% mutate(sales = fitted + resid[indices])
+  fit.star <- lm(sales ~ youtube+facebook+newspaper, data= data.star)
+  output <- c(summary(fit.star)$sigma, summary(fit.star)$r.squared)
+  return(output)
+}
 
-
+boot.nodel <- boot(my.data, my.stat, R=1000)
 boot.model <- boot(my.data, my.stat, R=1000) 
-```- - > 
+```
 
+```{r}
+hist(boot.model, layout=c(1,2))
+```
 
 
 
@@ -818,11 +828,11 @@ For two models, just run a F-test and if null hypothesis is rejected take the bi
 For more than two models, tricker, run tests sequentially, two approaches.
 
 \begin{eqnarray*}  
-H_{p0}: Z(t) ~ Z(t-1) & \cdots & Z(t-(p-1)) \\
-H-{pa}:Z(t) ~ Z(t-1) & \cdots & Z(t-p) \\
+H_{p0}: Z(t) \sim Z(t-1) + & \cdots & + Z(t-(p-1)) \\
+H-{pa}:Z(t) \sim Z(t-1) + & \cdots & + Z(t-p) \\
 & \vdots & \\
-H_{j0}: Z(t) ~ Z(t-1) & \cdots & Z(t-(j-1)) \\
-H-{ja}:Z(t) ~ Z(t-1) & \cdots & Z(t-j) \\
+H_{j0}: Z(t) \sim Z(t-1) + & \cdots & + Z(t-(j-1)) \\
+H-{ja}:Z(t) \sim Z(t-1) + & \cdots & + Z(t-j) \\
 \end{eqnarray*}
 
 
@@ -848,10 +858,84 @@ See slides, with backward selection, get 4 variables, with forward selection get
 #### Best subset 
 Across all models, models are not nested anymore, hyothesis testing is not possible. How do we choose the best model now? Evaluate which model fits the data best. $R^2$ ? But here, the largest model is always come out best because we can always explain more variation with more variables. We turn to an adjusted $R^2$. 
 
-Issue in $R^2 = \frac{SSE}{SST}$ through $SSE$, then adjust through the DF $adj. R^2 = 1- \frac{SSE/(n-|\mathcal{M}|)}{SST/(n-1)}$.
+Issue in $R^2 = \frac{SSE}{SST}$ through $SSE$, then adjust through the DF (caution, formula where intercept included) $adj. R^2 = 1- \frac{SSE/(n-|\mathcal{M}|)}{SST/(n-p)}$.
 
 However, adjusted $R^2$ rarely work and has difficult interpretation, what is a better criteria? 
 
+# Lecture 10 
+Recap on variable selection. 
+
+- enhanced interpretability
+
+- bias-variance tradeoff: not viewing LM as true model, so always have bias, we can always collected more and more variables. You could argue with all variables, we have better prediction, however variance grows because the noise adds up as well for each added variables.
+
+- Hypothesis-based approach
+  - forward
+  
+  - backward
+  
+  - stepwise regression 
+  
+## Variable selection 
+
+### Hypothesis testing based approaches
+#### Best subset 
+We want to assign a criterion assessing the goodness of a model to select the best model. 
+
+- Identify models space of models $\mathcal{M}$ with all subsets
+- Assign the criteria $\mathcal{C}(M), \forall M \in \mathcal{M}$
+- Select the model that optimises the criteria 
+
+How do we come up with a criteria? How do we optimise over $\mathcal{M}$?
+Want to balance between underfitting and overfitting, but what is the point of fitting? We want to predict on new data not just reproduce our current data. Looking at the RSS, we only look at  how well the model fits the data but doesn't tells us how well it would predict future data.  
+
+Here an example: $$ M_0 : Y = 3X_1 + \varepsilon \\
+LM : Y \sim X_1 + X_2 + \cdots + X_j $$ 
+
+```{r}
+rsq <- NULL
+set.seed(123)
+n = 10
+x = rnorm(n)
+y = rnorm(x*3, n)
+
+for (i in 1:(n-1)) {
+  fit.x <- lm(y ~ x)
+  rsq <- rbind(rsq, c(summary(fit.x$coef),summary(fit.x$rsquared) ))
+ }
+```
+See that including more variables, more degrees of freedom. Adj. $R^2$ let's pick a simpler model, but still doesn't work completely, as we see that by the end, the Adj. $R^2$ jumps up again. This is because the SSE tends to one when overfitting. It only adjusts for model complexity.
+
+#### Prediction based criteria
+
+What is a good prediction? Good prediction and fit are not necessary achieved the same way. We fit a certain dataset on the assumption that it is representative of what we want to study. If it is representative, if we have a new observation $x_{new}$, shall predict $\hat{y}_{new} = \hat{x}_{new}^T \hat{\beta}$. If it is uniformly sampled from our data (as in Bootstrap sort of idea), we see RSS is indeed the way to measure our performance. See that this works only when $y_{new} \perp \hat{y}_{new}| x_{new}$. 
+
+In particularm we are overoptism in training error:
+$$ E(RSS) = E(\frac{1}{n} \sum_i (\hat{y}_{i})- y_i)^2) = \sigma^2 +\frac{1}{n} \sum_i E(\hat{y}_{i})- \mu(x_i))^2) + \color{red}{E(\frac{2}{n} \sum_i (\hat{y}_{i})- \mu(x_i))(\mu(x_i)- y_i))} $$
+
+Note that with calculation recognising the hat matrix and assuming the errors are uncorrelated (see slides): $\color{red}{E(\frac{2}{n} \sum_i (\hat{y}_{i})- \mu(x_i)(\mu(x_i)- y_i))} = \frac{2\sigma^2 |\mathcal{M}|}{n} > 0$ 
+This also gives us a way to correct our RSS! Substracting for this overoptism, we get the Mallow's $C_p(\mathcal{M}) = RSS_{\mathcal{M}} + 2 \hat{\sigma}^2 |\mathcal{M}|$ where $\hat{\sigma}^2= RSS_{full}/(n-p)$ with the RSS of full model. This justifies that we privilege backwards elimination for large datasets since our estimate of $\hat{\sigma}^2$ is better. 
+
+
+### Information criteria
+These are not derived using a prediction based method but do combine the same ideas: a term minimising RSS, a term minimising the complexity of the models. 
+
+
+# Lecture 11
+
+Recap on variable selection.
+
+- hypothesis based F-statistics: easy to implement, interpret but results can be very off
+
+- Best subset on space of all models with criterion measuring quality of each model
+  - Mallow's $C_p$: unbiased risk estimate
+  - Information based criteria
+  
+  
+## Variable selectoin
+### Information based criteria
+
+$IC(\mathcal{M}) = n \log(S_\mathcal{M}/n)+\lambda \sigma^2|\mathcal{M}$
 
 
 
@@ -862,21 +946,121 @@ However, adjusted $R^2$ rarely work and has difficult interpretation, what is a 
 
 
 
+# Lecture 12: Variable selection IV
+Recap: 
+
+- Two step procedure: choose model over some criterion, use LS with choosen model,
+- Three ideas: Unbiased risk estimate with Mallow's, CV and GCV
+- Challenge: NP-hard, unstable, greedy stepwise implementation
+
+
+Unstability: Neil Breiman shows when removing one data point, could lead to big changes in the model, variable selection gains interpretability but little changes in the data has big impact in the model. How can we have faith in the selected model? 
+On the one-hand, model selection is usefulm if the signal is strong ie one model stands out, most criteria will agree with each other and select this one. In this case, we can feel secure to do analysis and inference. On the other hand, we need to be extra careful with interpretating our estimates. 
+
+Computational infeasibility happens if too many variables, can use quicker searches but nor the branch and bound nor stepwise search can't fully replace exhaustive search, will find a sort of local optimum.
+
+## Variable selection IV
+
+### Bayesian Model selection
+#### Framework
+
+Framework of hierarchical Bayes for variable selection: 
+
+- prior $P$ 
+- 
+- a data generating mechanism $P(data|\mathcal{M}, \beta_{\mathcal{M}})
 
 
 
+Suppose $X \sim N(\mu, 1)$, and $\mu ~ N(0, \sigma^2)$ then we can compute the posterior distribution $\mu|X$ (will follow a normal here).
+
+Now assume multivariate $Y=X^T \beta + \varepsilon$ with $Y_i sim N(X_i^T\beta, \sigma_0^2)$. We want to assume a similar prior as before $\beta \sim N(0, \sigma^2 I_p)$. Assuming to have the same $\sigma^2$ to control our belief is very hard, think of how this pictures: we are setting a very small box of variation around our covariates which have small probability mass as we go in higher dimensions.
+If more covariates, can move into a multivariate Gaussian, however, how do we specify the variance of our prior in this case to make the models comparable?
+
+#### Stochastic search variable selection 
+Framework: 
+
+\begin{eqnarray}
+& & y_i | x_i, \beta, \sigma^2 \sim N(x_i^T \beta, \sigma^2) \\
+& & \beta|\gamma \sim N(0, DRD)\\
+& & \gamma \sim Ber(w_j) \\ 
+& & \sigma^2 | \gamma \sim IG(\nu/2, \nu \lambda/2)
+\end{eqnarray}
+
+Reference: Goerge and McCullogh
+
+Idea as follows: include all the variables, model selection means we want to drop the estimates close to 0. In here, we avoid calculations of different dimensions $\beta$. This method gives you an estimate while variable selction. We give a prior $\beta|\gamma \sim N(0, D_\gamma R D_\gamma)$ where $\gamma$ has use to specify whether the particular coefficient is or not in the model. If it is in the model, $\gamma_j = 0$, we give a prior for the corresponding coefficient set to $a_j = 1$ while if it is not ie $\gamma_j = 1$ we want to set $\beta_j =0$ but we can't since it will give us the same issue of dimensionality as before. What we do is we put a very tight normal as prior for $\beta_j \sim w_j N(0,c_j \sigma^2)$ where $c_j$ almost 0. This yields that $\beta_j \sim w_j N(0,c_j \sigma^2)+ (1-w_j)N(0, \sigma^2)$. Basically, \beta has a mixture model distribution.
+
+
+To carry on the calculation, we use stochastic search.
+
+1. The best way to do our calculation is to compute explicitly our posterior probabilities (conjugate priors give us explicit form). 
+
+2. This is however not always possible, then we might want to sample our posterior $P(\mathcal{M}|Y,X)$ using Monte Carlo. 
+
+3. If this isnt possible either, we need exhaustive search. Knowing only prior and likelihood, is it possible to sample from posterior? Ideas behind MCMC, Gibbs Sampling and Metropolis Hastings. 
+
+Indeed, in our example, we see that we can compute distributions of $\nu|\beta, \sigma^2, data$, $\beta|data, \gamma, \sigma^2$, and $\sigma^2|data, \beta,\nu$. Instead of sampling full posterior, we do a Markov chain of the conditionals. See Markov chains' stationarity properties.
+
+
+\begin{eqnarray}
+& &  \beta^{[0]} \sim \beta|data, \dots \text{ follows a normal}\\
+& & \gamma^{[0]} \sim \gamma| data, \beta^{[0]}\text{ follows a bernoulli} \\
+& & \sigma^{[0]} \sim \sigma| data, \beta^{[0]}, \gamma^{[0]} \text{ follows an inverse-gamma}\\ 
+& & \beta^{[1]} \sim \beta| data, \gamma^{[0]}, \sigma^{[0]} \\
+& \vdots &
+\end{eqnarray}
+
+
+### Regularization for variable selection
+#### Bridge regression
+Variable selection and model selection are equivalent. See that Mallow's Cp is a special case of the following:
+
+$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda Pen(\beta) $$
+where $Pen$ is some sort of penalization. 
+
+In case of Mallows Cp we are counting the non-zero entries ie we are looking at the $\ell_0$ norm. This gives intuition to look at Bridge regression for $\ell_p$ norm penalisations for $p \geq 1$. With a quasi norm, we can also defines this for $p \in (0,1)$. 
+
+$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda ||\beta||_{\ell_p}^p $$
+For $p = 1$, Lasso, can see no longer have smooth volume, the poles are points more likely to be hit by our hyperplane. Note that $p=0$ gives sparse solutions, for $p< 1$ solutions are non convex, for $p \geq 1 $ is convex. 
+
+#### Shrinkage effect
+
+Suppose we do Bridge with one covariate. We want to know what happens when we penalise our coefficient. This is refer to the shrinkage effect. 
 
 
 
+See picture. The horizontal axis is taken as magnitude of LS estimate, the vertical being the magnitude of penalised Bridge estimate ie $\hat{\beta_\lambda} \propto \hat{\beta}$. 
+
+For $p > 1$ we are shrinking the estimates that are far from 0 in this case. We have a preference for estimates near 0.
+For $p \leq 1$ we are shrinking the estimates that are close to 0, estimating by 0 when they are small. Note that for $p=1$ there's always a difference between our shrinkage estimate and LS estimate so the estimate is always going to biased! In this respect, $p<1$ is preferrable. However, computationally, we have to deal with non convex optimisation issue! This explains the popularity of choice $p=1$. 
+
+Most preferred methods:
 
 
+- Ridge with $\ell_2$: $\frac{1}{n} ||Y-X\beta||^2 + \lambda_2 ||\beta||_{\ell_2}$
+
+- Lasso with $\ell_1$: $\frac{1}{n} ||Y-X\beta||^2 + \lambda_1 ||\beta||_{\ell_1}$
 
 
+#### Elastic net 
+$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda_1 ||\beta||_{\ell_1}+ \lambda_2 ||\beta||_{\ell_2}^2 $$
+
+- $\ell_1$ allows sparsity and acts as variable selection 
+- $\ell_2$ stabilises the $\ell_1$ regularization and has grouping property.
+
+Grouping effect: If two variables are highly correlated, none will be selected as we cant decide which of the two has a causal effect, however it doesnt make sense to select nothing, at least one is relevant. Strategies would be to select one of the two, but with good chance of selecting the wrong one, or both but it is even worse as now our design matrix is no longer well conditioned. This pathological case is recovered using Ridge estimate by putting equal value for both estimates. This is kind of like the first strategy as it is in a way arbitrary but it stabilises the regression for other covariates. This only caveat is identifying the effect of those two variables will be hard. 
 
 
+```{r}
+pros = read.table('https://statweb.stanford.edu/')
+```
 
-
-
+```{r}
+library(glmnet)
+fit <- glmnet(pros[,-1], pros[,1])
+plot(fit)
+```
 
 
 

@@ -1,0 +1,26 @@
+---
+title: "misc"
+author: "claire"
+date: "2022-10-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Test 1
+
+
+```{r cars}
+dataA <- c(82, 79, 80, 88, 91, 98, 93, 100, 88, 83,77,72,76,90, 77, 98, 61, 95, 89, 88, 76, 77, 66, 86, 98, 76, 100, 100, 67, 86, 85, 93, 92, 79, 73, 98, 82, 77, 87, 81, 100, 96, 91, 95, 93)
+
+summary(dataA)
+hist(dataA)
+```
+
+
+```{r}
+dataA <- c(96,100,90)
+```
+
