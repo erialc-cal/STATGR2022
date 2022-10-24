@@ -1,0 +1,147 @@
+\documentclass[english]{article}
+\usepackage[margin=1in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
+\usepackage{comment}
+\usepackage{dsfont}
+ \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{babel}
+\usepackage{graphicx}
+\usepackage{tikz,tkz-tab}
+\usepackage{framed}
+\newcommand{\ve}{\varepsilon}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\K}{\mathbb{K}}
+\newcommand{\RX}{\mathbb{R}[X]}
+\newcommand{\KX}{K[X]}
+\newcommand{\MatC}{\mathcal{M}_n(\mathbb{C})}
+\newcommand{\MatR}{\mathcal{M}_n(\mathbb{R})}
+\newcommand{\I}{\mathds{1}}
+\newcommand{\df}{\mathrm{d}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\J}{\mathcal{J}}
+\newcommand{\Cl}{\mathcal{C}}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{Assignment 7}
+\fancyhead[LE,RO]{}
+\fancyhead[RE,LO]{Claire He}
+\fancyfoot[CE,CO]{\leftmark}
+\fancyfoot[LE,RO]{\thepage}
+\usepackage{layouts}
+
+\makeatletter
+\renewcommand*{\@textcolor}[3]{%
+  \protect\leavevmode
+  \begingroup
+    \color#1{#2}#3%
+  \endgroup
+}
+\makeatother
+
+\newenvironment{changemargin}[2]{\begin{list}{}{%
+\setlength{\topsep}{0pt}%
+\setlength{\leftmargin}{0pt}%
+\setlength{\rightmargin}{0pt}%
+\setlength{\listparindent}{\parindent}%
+\setlength{\itemindent}{\parindent}%
+\setlength{\parsep}{0pt plus 1pt}%
+\addtolength{\leftmargin}{#1}%
+\addtolength{\rightmargin}{#2}%
+}\item }{\end{list}}
+%\begin{changemargin}{2cm}{-1cm}
+%Ceci permet d'augmenter la marge gauche de 2cm et de diminuer celle de droite de 1cm.
+%\end{changemargin}
+\begin{document}
+ 
+%\renewcommand{\qedsymbol}{\filledbox}
+%Good resources for looking up how to do stuff:
+%Binary operators: http://www.access2science.com/latex/Binary.html
+%General help: http://en.wikibooks.org/wiki/LaTeX/Mathematics
+%Or just google stuff
+ 
+\title{Probability Theory I \\ 
+Assignment 7}
+\author{Claire He}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%linewidth: \printinunitsof{cm}\prntlen{\linewidth}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Exercise 1}
+
+Let $\Cl$ be a monotone class and a field. Since it is a field, it is closed under complementation and finite union or intersections. Since it is monotone class, it is closed under increasing countable unions and countably decreasing intersections.
+
+\begin{itemize}
+    \item $\varnothing \in \Cl$ since $\Cl$ is a field. 
+    \item $\Cl$ is closed under complementation from $\Cl$ being a field.
+    \item Now let's take $(A_n) \in \Cl^\N$. Define $B_n = \bigcup_{k=1}^n A_k$ for  $n \in \N$. Since $\Cl$ is a field, $B_n \in \Cl$ as finite union of elements of $\Cl$, and moreover $(B_n)$ defines an increasing sequence. Since $\Cl$ is a monotone class, $\bigcup_{n =1}^{\infty} B_n \in \Cl$. Now this writes also  $\bigcup_{n =1}^{\infty} B_n = \bigcup_{n =1}^{\infty} \bigcup_{k=1}^n A_k = \bigcup_{k =1}^{\infty} A_k  \in \Cl$ as required for a $\sigma$-field. 
+    
+\end{itemize}
+
+
+
+\section*{Exercise 2}
+
+Now let $\Cl$ be a $\pi$-system and a $\lambda$-system. Since it is a  $\pi$-system it is closed under finite intersections and as a  $\lambda$-system , $\Omega \in \Cl$, it is closed under countable increasing unions and monotone differences.
+
+\begin{itemize}
+    \item $\varnothing = \Omega \backslash \Omega \in \Cl$ since $\Omega  \in \Cl$
+    \item Want to show $\Cl$ is closed under complementation. Take $A\in \Cl$, then $A \subset \Omega$ and $A^c = \Omega \backslash A \in \Cl$ by property of $\lambda$-systems. 
+    \item Now let's take $(A_n) \in \Cl^\N$. By the previous assertion, note that for $n$, $A_n^c \in \Cl$. Define $B_n = \bigcup_{k=1}^n A_k$. Since $\Cl$ is a $\lambda$-system, $B_n^c = \bigcap_{k=1}^n A_k^c \in \Cl$ as finite intersections of elements of $\Cl$. By complementation again, $B_n \in \Cl$.  As before, $(B_n)$ defines an increasing sequence. Since $\Cl$ is closed under countable increasing unions, $\bigcup_{n =1}^{\infty} B_n \in \Cl$. Now this writes also  $\bigcup_{n =1}^{\infty} B_n = \bigcup_{n =1}^{\infty} \bigcup_{k=1}^n A_k = \bigcup_{k =1}^{\infty} A_k  \in \Cl$ as required for a $\sigma$-field. 
+\end{itemize}
+
+\section*{Exercise 3}
+Suppose $\mathcal{I}, \J \subset \F$ are two $\pi$-systems on $(\Omega, \F, P)$. Following the hint, for $I \in \mathcal{I}$, let's consider $\pi_1 : H \mapsto P(I \cap H)$ and $\pi_2 : H \mapsto P(I)\cdot P(H)$ measures on $\J$. 
+We need to check they are indeed measures. 
+\begin{itemize}
+    \item $\pi_1(\varnothing) = P(\varnothing \cap I) = P(\varnothing) = 0$ and $\pi_2(\varnothing) = P(\varnothing) \cdot P( I)  = 0$ 
+    \item Let $A_1,  A_2, \dots \in \J$ pairwise disjoint,  
+
+	\begin{eqnarray*}
+		\pi_1(\bigcup_{n \in \N} A_n) &  = & P(I \cap \bigcup_{n \in \N} A_n) \\
+		& = & P(\bigcup_{n \in \N} A_n \cap I ) \\
+	& = & \sum_{n \in \N} P(A_n \cap I) \text{ \ since P is a measure} \\
+ & = & \sum_{n \in \N} \pi_1(A_n) 
+	\end{eqnarray*} 
+Similarly, 
+	\begin{eqnarray*}
+		\pi_2(\bigcup_{n \in \N} A_n) &  = & P(I) \cdot P(\bigcup_{n \in \N} A_n) \\
+	& = & P(I) \cdot \sum_{n \in \N} P(A_n) \text{ \ since P is a measure} \\
+& = & \sum_{n \in \N} P(A_n) \cdot P(I) \\
+ & = & \sum_{n \in \N} \pi_2(A_n) 
+	\end{eqnarray*} 
+So $\pi_1$ and $\pi_2$ are measures on $\J$.
+\end{itemize}
+
+By determination of measures, if $\pi_1 = \pi_2$ on $\J$, since it is a $\pi$-system, then $\pi_1 = \pi_2$ on $\sigma(\J)$.
+Indeed, for any $H \in \J$, 
+\begin{eqnarray*}
+\pi_1(H) & = & P(I \cap H) \text{ \ independence of } \mathcal{I}, \J \\ 
+& = & P(I)\cdot P(H) \\
+& = & \pi_2(H)
+\end{eqnarray*}
+In particular, this yields that $\mathcal{I}$ and $\sigma(\J)$ are independent. 
+
+Now fix $H \in \sigma(\J)$ and consider the measures $\tilde{\pi}_1 : I \mapsto P(I \cap H)$ and $\tilde{\pi}_2 : I \mapsto P(I)\cdot P(H)$ on $\mathcal{I}$, we show similarly that the measures coincide on $\mathcal{I}$ hence by determination of measure on $\sigma(\mathcal{I})$. 
+Indeed, for any $I \in \mathcal{I}$, 
+\begin{eqnarray*}
+\tilde{\pi}_1(I) & = & P(I \cap H) \text{ \ independence of } \mathcal{I}, \sigma(\J) \\ 
+& = & P(I)\cdot P(H) \\
+& = & \tilde{\pi}_2(I)
+\end{eqnarray*}
+In particular this means that $\sigma(\mathcal{I})$  and $\sigma(\J)$ are independent. 
+
+\section*{Exercise 4}
+
+\end{document}

@@ -987,7 +987,7 @@ Framework:
 & & \sigma^2 | \gamma \sim IG(\nu/2, \nu \lambda/2)
 \end{eqnarray}
 
-Reference: Goerge and McCullogh
+Reference: George and McCullogh
 
 Idea as follows: include all the variables, model selection means we want to drop the estimates close to 0. In here, we avoid calculations of different dimensions $\beta$. This method gives you an estimate while variable selction. We give a prior $\beta|\gamma \sim N(0, D_\gamma R D_\gamma)$ where $\gamma$ has use to specify whether the particular coefficient is or not in the model. If it is in the model, $\gamma_j = 0$, we give a prior for the corresponding coefficient set to $a_j = 1$ while if it is not ie $\gamma_j = 1$ we want to set $\beta_j =0$ but we can't since it will give us the same issue of dimensionality as before. What we do is we put a very tight normal as prior for $\beta_j \sim w_j N(0,c_j \sigma^2)$ where $c_j$ almost 0. This yields that $\beta_j \sim w_j N(0,c_j \sigma^2)+ (1-w_j)N(0, \sigma^2)$. Basically, \beta has a mixture model distribution.
 
@@ -1053,15 +1053,85 @@ Grouping effect: If two variables are highly correlated, none will be selected a
 
 
 ```{r}
-pros = read.table('https://statweb.stanford.edu/')
-```
-
-```{r}
 library(glmnet)
-fit <- glmnet(pros[,-1], pros[,1])
+fit <- glmnet(golf[,-1], golf[,1])
 plot(fit)
 ```
 
+# Lecture 13: Variable selection V
+
+Recap: 
+
+- Bayesian Model selection: spike and slab prior
+- Regularization: allows you to put a prior knowledge of what coefficients you want shrunk 
 
 
+
+#### LASSO
+LASSO interesting as still penalty is convex, however has shrinkage property because of existence of corners on the $\ell_1$ ball (captures sparsity). 
+It is  hard to achieve simultaneously good efficiency of model and model consistency. This is also true for LASSO: but which one is compromised here? All depends on the choice of the tuning parameter $\lambda$. There are also cases in which however you choose your tuning parameter, the model won't be consistent. 
+
+Note, $\hat{\beta}_{ridge} = (X^T X-\lambda I)^{-1}X^T Y$. First order conditions for LASSO $-2X^T Y+ 2X^TX \beta +\lambda sgn(\beta)=0$ where $sgn(\beta) = 1$ if $\beta>0$, $sgn(\beta) = -1$ if $\beta<0$ and $sgn(\beta) = [-1,1]$ if $\beta=0$. Yields for $\hat{\beta}_{LASSO}=(X^TX)^{-1}(X^TY - \frac{1}{2} \lambda sgn(\beta))$. Note if $\lambda > 2|X^T Y|$ in univariate, shrinks to 0. In multivariate, will happen similarly when  $\lambda > 2 \max_{i=1, \dots, p} |X_i^T Y|$. 
+
+Scaling issue with LASSO: if two different units for two coefficients, will influence our result, $\lambda$ no longer has a unit. We need to rescale all input variable to make sure they are all comparable. This is however more an ad hoc solution, there is no reason to believe that things should have unit sd. 
+
+Useful with LASSO is to have a pathway of solutions. Which estimate should we take? 
+
+### Tuning parameter selection
+
+#### Ridge
+Start with ridge, we have a linear estimate $X \hat{\beta}=H(\lambda) Y$ with $H(\lambda) = X (X^T X-\lambda I)^{-1}X^T$. So we can find the unbiased risk estimate $R(\beta, \hat{\beta}_R) = \frac{\sigma^2}{n}Tr(H(\lambda))$. 
+
+#### LASSO
+Only interested in values that are not 0-coefficiented. Define therefore the support vector $s = supp(\hat{\beta})= \{ j: \hat{\beta}_j \neq 0 \}$. Note that we don't know $S$ yet. 
+So $\hat{Y} = X\hat{\beta}= X_s \hat{\beta}_s$ and in first order conditions $\hat{\beta}_s=(X^T X)^{-1}(X^TY-\lambda s(\hat{\beta}_s))$.
+
+No longer a linear estimate. But it is still a piecewise linear estimate. However can apply on normal rv using Stein's lemma. Note that when you change a little bit your $Y$ it is not going to change the support set. In this case we find the Stein s unbiased risk estimate equal to $\frac{2\sigma^2}{n} E(|S|)$. However this works on the assumption of gaussian noise, which is likely to not be the case with the data if we want to do LASSO on it (likely to be skewed).
+
+Cross-validation on LASSO to find tuning parameter:
+```{r}
+set.seed(123)
+cv.fit <- cv.glmnet(data.matrix(marketing[,-1]),marketing[,1])
+plot(cv.fit)
+```
+
+
+We want a smaller model, but we want it to not be statistically different to the full model. First line gives you the $\lambda$ given by the CV, the second line gives another $\lambda$ that is not statistically different from the one (less than 1sd away) but reduces the number of variables a lot. 
+
+## Categorical Variables
+```{r}
+library(xtable)
+data(tli)
+tli$grade<-as.factor(tli$grade)
+summary(tli)
+```
+
+There is no meaning of how to compare different grades, we need to interpret it as a categorical variable. We don't want to use grade as an $X$ which is why we turn it into a factor and we now use grade as a label. 
+Now run a linear regression. How do we interpret this? Why is there a star next to grade6?
+
+```{r}
+fit<- lm(tlimth ~ ., data=tli)
+summary(fit)
+```
+Read that a female black student in grade 3 with no economic disadvantage has an average 64 on test scores. Read grade4 says that if she was in grade 4, would average go up with 4.57 points. 
+
+We encode the grades the following. 
+```{r}
+contrasts(tli$grade)
+```
+
+Not the best why to encode information, we could use deviation coding. 
+
+```{r}
+contrasts(tli$grade)=contr.sum(6) 
+#contrasts(tli$ethnicity)=contr.sum(4) 
+fit <- lm(tlimth ~., data=tli)
+summary(fit)
+```
+
+Estimates changed a lot. What to do? We shouldn't be trying to use the contrasts to decide on significance but anova. 
+
+```{r}
+anova(fit)
+```
 
