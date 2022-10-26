@@ -1103,7 +1103,7 @@ We want a smaller model, but we want it to not be statistically different to the
 library(xtable)
 data(tli)
 tli$grade<-as.factor(tli$grade)
-#tli$ethnicity<-as.factor(tli$ethnicity)
+tli$ethnicty<-as.factor(tli$ethnicty)
 summary(tli)
 ```
 
@@ -1126,7 +1126,7 @@ Not the best why to encode information, we could use deviation coding.
 
 ```{r}
 contrasts(tli$grade)=contr.sum(6) 
-#contrasts(tli$ethnicity)=contr.sum(4) 
+contrasts(tli$ethnicty)=contr.sum(4) 
 fit <- lm(tlimth ~., data=tli)
 summary(fit)
 ```
@@ -1210,22 +1210,35 @@ step(fit)
 ```
 
 From a practical point of view, can run a categorical variable in lm but declare as a factor. When converting as a factor, think of what contrasts to choose. 
+ 
+### Effect of coding
+
+Factor representation $X$ : $Y=X\beta +Z\gamma +\varepsilon$ 
+
+Different coding can be seen as a invertible transformation. 
+
+### Interactions
+
+```{r}
+fit<- lm(tlimth ~. ^2, data=tli)
+summary(fit)
+```
+
+Degrees of freedom just with interactions of grade and ethnicity
+\begin{align*}
+grade & \rightarrow & 6 DF (k_1) & &  \\
+ethn & \rightarrow & 4 DF (k_2) & &  \\
+& & $\Rightarrow$ & &  total of 23 DF ($k_1 k_2 -1$)  \\ 
+     & & &  $\longrightarrow$  & grade 5 DF ($k_1 -1$) \\
+     & & &  $\longrightarrow$  & ethn 3 DF \\
+     & & &  $\longrightarrow$  & grade:ethn 15 DF $(k_1 -1)(k_2 -1)$ 
+\end{align*}
+
+In the table, grade:ethn has 11 DF instead of our calculated 15. Missing values from certain combinations take out DF. There might be no values in certain combinations, take OTHERethn and grade7 eg. 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Marginality principle 
+Rationale: when model selection, want to have a model in which if heredity effect is strong (interaction strong) both main effects are strong (strong heredity) or at least one main effect is (weak heredity). 
 
 
 
