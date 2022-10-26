@@ -1103,6 +1103,7 @@ We want a smaller model, but we want it to not be statistically different to the
 library(xtable)
 data(tli)
 tli$grade<-as.factor(tli$grade)
+#tli$ethnicity<-as.factor(tli$ethnicity)
 summary(tli)
 ```
 
@@ -1113,7 +1114,8 @@ Now run a linear regression. How do we interpret this? Why is there a star next 
 fit<- lm(tlimth ~ ., data=tli)
 summary(fit)
 ```
-Read that a female black student in grade 3 with no economic disadvantage has an average 64 on test scores. Read grade4 says that if she was in grade 4, would average go up with 4.57 points. 
+Read that a female black student in grade 3 with no economic disadvantage has an average 64 on test scores. Read grade4 says that if she was in grade 4, would average go up with 4.57 points. However, can we interpret the significance?
+We are using grade3 as baseline, this output shows grade6 is significant which allows us to say all other grades are similar to grade3 but grade6 is significantly from grade3. If you change the baseline, you'll find something similar with other levels involved, can find contradictions. Why? because there's no transitivity in hypothesis testing: 1 being significantly different from 2 and 2 sig. diff. from 3 doesn't imply 1 sig. diff. from 3. Second issue is a how do we interpret the p-value. Have to introduce a correction: Bonferroni correction. 
 
 We encode the grades the following. 
 ```{r}
@@ -1134,4 +1136,96 @@ Estimates changed a lot. What to do? We shouldn't be trying to use the contrasts
 ```{r}
 anova(fit)
 ```
+
+Logistic: take home exam on Courseworks, Wednesday between 10-10:10. Due Friday at noon. Submission either via email to Jialin, more instructions to come. 
+
+
+# Lecture 14: Categorical variables
+
+*Recap* 
+
+- LASSO: practical aspects of using it as variable selection technique: LASSO solution path is piecewise linear --> figuring out where the change point occurs is key (see least angles method optimisation/stats, ...)
+
+- Tuning parameter selection 
+  - similar to model selection
+  - unbiased risk estimate, GCV, AIC, CV,...
+  
+- Dealing with Categorical Variables
+  - factors
+  - coding factors with contrasts
+  
+## Categorical variables
+
+### Anova 
+Note that *grade* and *ethnicity* are categoricals. Note for *ethnicity* there is only 4 categories, with OTHERS having only two observations, have to be careful about its interpretation. 
+```{r}
+summary(tli)
+```
+How do we interpret *grade*? By definition, by introduce dummy variable, there is not much point to explain a dummy variable. Want to look at coefficients collectively. Deviation contrasts is going to enable us to have a proper statistical analysis. Anova table also allows a proper interpretation. 
+
+```{r}
+summary(fit)
+anova(fit)
+```
+
+Anova uses the F-test to test simultaneously the 5 levels of grade (so 5 DF). F-value(Variable) = Mean Sq(Variable) /(Mean Sq(Residuals))
+Weird thing happening, t-stat and f-stat should be the same for sex... Point out https://stats.stackexchange.com/questions/13241/the-order-of-variables-in-anova-matters-doesnt-it 
+
+### Deviation coding
+Last level used as benchmark. In dummy coding, intercept and grade3 are tight together, so harder to interpret. Here in deviation coding, we overcome this caveat by explicitly setting a level as benchmark and comparing a grade to the benchmark (hence +1, -1). However, here the coefficient no longer reads as the effect of one coefficient, the scale is changed. It will always read as effect of grade 4 and 8, 5 and 8 etc, etc. 
+
+```{r}
+contrasts(tli$grade) = contr.sum(6)
+contrasts(tli$grade)
+```
+
+```{r}
+contrasts(tli$grade) = contr.sum(6)
+fit<- lm(tlimth ~ ., data=tli)
+summary(fit)
+anova(fit)
+```
+Note that anova is invariant on coding variables. 
+
+### Other coding schemes
+
+When there is some sort of order in the variables, not necessarily linear, can use the polynomial contrasts to capture up to degree $d$ of relations. If 6 variables, have to go up to degree 5 of polynomials. Might be computationally expensive.
+
+```{r}
+contr.poly(4)
+```
+
+Helmert's contrasts is particularly useful for ordinal categorical variables, we are always comparing to all the variables before us. 
+```{r}
+contr.helmert(4)
+```
+
+Depending on the nature of categorical variables, some contrasts might make more sense. Can design your own contrasts. As a collective interpretation, use ANOVA. 
+
+
+Has implications on variable selection. Note that variable coding will influence the variable selection choice. Have to be careful, introduce step function to select factors. See how RSS and AIC changes when removing a variable. 
+
+```{r}
+step(fit)
+```
+
+From a practical point of view, can run a categorical variable in lm but declare as a factor. When converting as a factor, think of what contrasts to choose. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
