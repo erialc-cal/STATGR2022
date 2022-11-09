@@ -1,20 +1,34 @@
-- - - 
-title: "Applied lecture notes"
-output: 
-  html_document: default
- # pdf_document: default
-date: "2022- 10- 03"
-- - - 
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+|     |     |                            |
+|-----|-----|----------------------------|
+| ti  | tl  | e: "Applied lecture notes" |
+| ou  | tp  | ut:                        |
+|     | ht  | ml_document: default       |
+| \#  | p   | df_document: default       |
+| da  | te  | : "2022- 10- 03"           |
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
 ```
 
 # Lecture 1: introduction to regressions
-## Introduction
-Statistical relationship between predictors $x$ (or input, independent, explanatory variable) and response variables $y$ (or output, dependent) resulting from a functional relation and random errors. 
 
-For practical examples in the course, we load the following package containing data from the book "Extending the linear model with R" (J. Faraway). Details can be found here https://julianfaraway.github.io/faraway/LMR/. 
+## Introduction
+
+Statistical relationship between predictors $x$ (or input, independent,
+explanatory variable) and response variables $y$ (or output, dependent)
+resulting from a functional relation and random errors.
+
+For practical examples in the course, we load the following package
+containing data from the book "Extending the linear model with R" (J.
+Faraway). Details can be found here
+<https://julianfaraway.github.io/faraway/LMR/>.
+
 ```{r pressure, echo=FALSE}
 #install.packages("faraway")
 #install.packages("HistData")
@@ -24,7 +38,8 @@ library(GGally)
 ```
 
 ## Regression to mediocrity
-We try to predict children's height using parents' height. 
+
+We try to predict children's height using parents' height.
 $$\text{childHeight}=\alpha+\beta\cdot\text{midparentHeight}+\varepsilon$$
 
 ```{r, echo=FALSE}
@@ -34,141 +49,185 @@ lmod <- lm(childHeight ~ midparentHeight, GaltonFamilies)
 abline(lmod)
 coef(lmod)
 ```
-Now using Darwin's theory that a parent a sd taller than the mean is likely to have a child with same characteristics.
+
+Now using Darwin's theory that a parent a sd taller than the mean is
+likely to have a child with same characteristics.
+
 ```{r, echo=FALSE}
 (beta1 <- with(GaltonFamilies, sd(childHeight / sd(midparentHeight))))
 (alpha1 <- with(GaltonFamilies, mean(childHeight)- beta1*mean(midparentHeight)))
 ```
-We see that the black line from Galton's theory is regression to mediocrity whilst the Darwin theory shows inflated extremal values.
+
+We see that the black line from Galton's theory is regression to
+mediocrity whilst the Darwin theory shows inflated extremal values.
 
 (Regression line in dotted lines, $y=\alpha_1+\beta_1 x$ in full line.)
+
 ```{r, echo=FALSE}
 plot(childHeight ~ midparentHeight, GaltonFamilies, pch=16, main='Children height vs mid- parent height', xlab='mid- parent height', ylab='children height')
 abline(a=alpha1, b=beta1)
 abline(coef(lmod), lty=5)
 
 ```
-Why is there regression to mediocrity? Because there's only a smaller portion of people being a SD taller than the mean (assuming for ex a normal distribution), so there's a dilution because of the mean. Note that this doesn't mean that variation across the whole population diminishes because there's enough random fluctuations across all heights so that even though we say an individual is 1 standard deviation above average implies that his child can expect a less than 1 standard deviation above average, the total variability is kept. 
 
-# Lecture 2: linear regression 
+Why is there regression to mediocrity? Because there's only a smaller
+portion of people being a SD taller than the mean (assuming for ex a
+normal distribution), so there's a dilution because of the mean. Note
+that this doesn't mean that variation across the whole population
+diminishes because there's enough random fluctuations across all heights
+so that even though we say an individual is 1 standard deviation above
+average implies that his child can expect a less than 1 standard
+deviation above average, the total variability is kept.
+
+# Lecture 2: linear regression
 
 ## Regression: response, covariates
+
 ### Simple linear regression
 
-$$\forall i=1,\dots, n: \ \ \ y_i=\alpha+\beta x_i+\varepsilon_i$$
-We can't fit a straight line to our data points with it going through all the points, Galton introduces the idiosyncratic error through residuals captured with $\varepsilon$. 
+$$\forall i=1,\dots, n: \ \ \ y_i=\alpha+\beta x_i+\varepsilon_i$$ We
+can't fit a straight line to our data points with it going through all
+the points, Galton introduces the idiosyncratic error through residuals
+captured with $\varepsilon$.
 
-### Least square estimate 
-Measure "closeness" through SSE (sum of squared errors): 
-$$SSE=\sum_i [y_i- (\alpha+\beta x_i)]^2$$ 
+### Least square estimate
 
-Least squares estimate: 
+Measure "closeness" through SSE (sum of squared errors):
+$$SSE=\sum_i [y_i- (\alpha+\beta x_i)]^2$$
+
+Least squares estimate:
 $$(\hat{\alpha},\hat{\beta})=\arg\min_{a, b}\sum_i [y_i- (\alpha+\beta x_i)]^2=SSE(a,b)$$
-Ofc we can look at first order conditions. Alternatively, an intuition on fitting least squares is noting that $$\min SSE(a,b)=\sum_i [y_i- (\alpha+\beta x_i)]^2=\sum_i [y_i- \bar{y}- (\alpha+\beta (x_i- \bar{x})]^2$$
-We can set our intercept to 0 going through middle points. 
-Then let the slope be $\hat{\beta}=\frac{\sum_i (y_i- \bar{y})(x_i- \bar{x})}{\sum_i (x_i- \bar{x})^2}$ and intercept $\hat{\alpha}=\bar{y}- \hat{\beta}\bar{x}$. 
+Ofc we can look at first order conditions. Alternatively, an intuition
+on fitting least squares is noting that
+$$\min SSE(a,b)=\sum_i [y_i- (\alpha+\beta x_i)]^2=\sum_i [y_i- \bar{y}- (\alpha+\beta (x_i- \bar{x})]^2$$
+We can set our intercept to 0 going through middle points. Then let the
+slope be
+$\hat{\beta}=\frac{\sum_i (y_i- \bar{y})(x_i- \bar{x})}{\sum_i (x_i- \bar{x})^2}$
+and intercept $\hat{\alpha}=\bar{y}- \hat{\beta}\bar{x}$.
 
-Can rewrite $\hat{\beta}=\frac{Cov(x,y)}{Var(x)}=\rho_{x,y}\frac{s_y}{s_x}$ 
-We can recognise that regression to the mean (mediocrity) if $\rho_{x,y}<1$.
+Can rewrite
+$\hat{\beta}=\frac{Cov(x,y)}{Var(x)}=\rho_{x,y}\frac{s_y}{s_x}$ We can
+recognise that regression to the mean (mediocrity) if $\rho_{x,y}<1$.
 
-Fitted values: $\hat{y}_i=\hat{\alpha}+\hat{\beta}x_i$ 
-
+Fitted values: $\hat{y}_i=\hat{\alpha}+\hat{\beta}x_i$
 
 Fitted line: $(\hat{y}_i- \bar{y})=\hat{\beta}(x_i- \bar{x})$
 
-###  Residuals' properties
+### Residuals' properties
 
--  SSE is minimised.
+-   SSE is minimised.
 
--  orthogonality properties :
-  1. $\sum_i\hat{\varepsilon}_i=0$ ie error is null on average
+-   orthogonality properties :
 
-  2. $\sum_i x_i\hat{\varepsilon}_i=Cov(x,\hat{\varepsilon})=0$ (if it isn't null, means there's still correlation in $x$ that we could fit our data better)
-  
-  3. $\sum_i\hat{y}_i\hat{\varepsilon}_i=0$ (as a linear combination of 1. and 2.) 
+1.  $\sum_i\hat{\varepsilon}_i=0$ ie error is null on average
 
+2.  $\sum_i x_i\hat{\varepsilon}_i=Cov(x,\hat{\varepsilon})=0$ (if it
+    isn't null, means there's still correlation in $x$ that we could fit
+    our data better)
+
+3.  $\sum_i\hat{y}_i\hat{\varepsilon}_i=0$ (as a linear combination
+    of 1. and 2.)
 
 ### Optimality of LSE
+
 Two reasons for choosing LSE are relying on its simplicity.
 
-#### BLUE 
-The LSE is the BLUE ie Best Linear Unbiased Estimator ie restricting ourselves to the class of linear estimators, this is the choice with best properties. 
-Consider $b=\sum_i a_i(y_i- \bar{y})$. Want to minimise variance of the estimator assuming we constraint it to be unbiased. 
+#### BLUE
+
+The LSE is the BLUE ie Best Linear Unbiased Estimator ie restricting
+ourselves to the class of linear estimators, this is the choice with
+best properties. Consider $b=\sum_i a_i(y_i- \bar{y})$. Want to minimise
+variance of the estimator assuming we constraint it to be unbiased.
 
 $$\mathbb{E}_{\varepsilon}(y_i- \bar{y})=\beta (x_i- \bar{x})$$
 
-
 **Assumption:** $Var(\varepsilon_i)=\sigma^2$\newline
 
--  Bias $=\beta- \mathbb{E}_{\varepsilon}(b)$\newline 
--  Variance $=var_\varepsilon(b)=\sum_i (a_i- \bar{a})$\newline 
+-   Bias $=\beta- \mathbb{E}_{\varepsilon}(b)$\newline 
+-   Variance $=var_\varepsilon(b)=\sum_i (a_i- \bar{a})$\newline 
 
-Solving the following for BLUE=$\min_a\sum_i (a_i- \bar{a})^2$ subject to $\sum_i a_i(x_i- \bar{x})=1$\newline 
-Using Lagrange multiplier, first order condition writes $a_i=\frac{x_i- \bar{x}}{\sum_j (x_j- \bar{x})^2}$
+Solving the following for BLUE=$\min_a\sum_i (a_i- \bar{a})^2$ subject
+to $\sum_i a_i(x_i- \bar{x})=1$\newline  Using Lagrange multiplier,
+first order condition writes
+$a_i=\frac{x_i- \bar{x}}{\sum_j (x_j- \bar{x})^2}$
 
 #### Interpretation of fit
 
-$$\mathbb{E}[Y- (a+bX)]^2=\mathbb{E}[Y- \mathbb{E}(Y|X)]^2+\mathbb{E}[\mathbb{E}(Y|X)- (a+bX)]^2$$ 
+$$\mathbb{E}[Y- (a+bX)]^2=\mathbb{E}[Y- \mathbb{E}(Y|X)]^2+\mathbb{E}[\mathbb{E}(Y|X)- (a+bX)]^2$$
 
-This means LSE allows a linear approximation to $\mathbb{E}(Y|X)$. The difference with this and the original linear regression, is that by taking the conditional expectation, we average out the idiosyncratic error and approximate over the conditional mean which allows our design to be random as well. 
+This means LSE allows a linear approximation to $\mathbb{E}(Y|X)$. The
+difference with this and the original linear regression, is that by
+taking the conditional expectation, we average out the idiosyncratic
+error and approximate over the conditional mean which allows our design
+to be random as well.
 
 #### Examples
 
-- Binary $X$\newline 
-Say $X\in\{0,1\}$
-$$\mathbb{E}(Y|X=x)=\mu_1\mathbb{1}(x=1)+\mu_0\mathbb{1}(x=0)=(\mu_1- \mu_0)x+\mu_0$$ 
+-   Binary $X$\newline  Say $X\in\{0,1\}$
+    $$\mathbb{E}(Y|X=x)=\mu_1\mathbb{1}(x=1)+\mu_0\mathbb{1}(x=0)=(\mu_1- \mu_0)x+\mu_0$$
 
-Control group being 0, treatment group 1. Intercept gives the baseline effect, slope the treatment effect. If $X$ is binary, LS always works, it delivers treatment and baseline effect directly. 
+Control group being 0, treatment group 1. Intercept gives the baseline
+effect, slope the treatment effect. If $X$ is binary, LS always works,
+it delivers treatment and baseline effect directly.
 
-- Depends on both $\mathbb{E}(Y|X)$ and the distribution of $X$ as well ! 
-Read Buja et al. 2019, Statistical Science on  https://arxiv.org/pdf/1404.1578.pdf.
-Often times a linear model is not sufficient if we're not looking at local $x$. 
+-   Depends on both $\mathbb{E}(Y|X)$ and the distribution of $X$ as
+    well ! Read Buja et al. 2019, Statistical Science on
+    <https://arxiv.org/pdf/1404.1578.pdf>. Often times a linear model is
+    not sufficient if we're not looking at local $x$.
 
-- Stein's Identity 
-Assumption: **Assume** $X$ is Gaussian. 
-*Theorem*: If $X\sim N(0,1)$, then $\mathbb{E}(Xg(X))=\mathbb{E}g'(X)$. 
+-   Stein's Identity Assumption: **Assume** $X$ is Gaussian. *Theorem*:
+    If $X\sim N(0,1)$, then $\mathbb{E}(Xg(X))=\mathbb{E}g'(X)$.
 
-Estimand of the slope: set $f(X)=\mathbb{E}(Y|X)$, we get $\mathbb{E}(Y- (a+bX))^2\to\beta=\mathbb{E}(f'(X))$ 
+Estimand of the slope: set $f(X)=\mathbb{E}(Y|X)$, we get
+$\mathbb{E}(Y- (a+bX))^2\to\beta=\mathbb{E}(f'(X))$
 
 ### Summary
-For OLS estimate we have 
 
-- explicit form: $\hat{\beta}=\frac{Cov(x,y)}{Var(x)}=\rho_{x,y}\frac{s_y}{s_x}$ 
+For OLS estimate we have
 
-- for residuals, they are uncorrelated with fitted value, covariate:  $\sum_i x_i\hat{\varepsilon}_i=Cov(x,\hat{\varepsilon})=0$ 
+-   explicit form:
+    $\hat{\beta}=\frac{Cov(x,y)}{Var(x)}=\rho_{x,y}\frac{s_y}{s_x}$
 
-- interpretation:
-    - treatment effect
-    - linear approximation to conditional mean
-    - slope: (Stein's theorem) averaged derivative under Gaussian
+-   for residuals, they are uncorrelated with fitted value, covariate:
+    $\sum_i x_i\hat{\varepsilon}_i=Cov(x,\hat{\varepsilon})=0$
 
+-   interpretation:
+
+    -   treatment effect
+    -   linear approximation to conditional mean
+    -   slope: (Stein's theorem) averaged derivative under Gaussian
 
 # Lecture 3: Inference
-## Scope of statistical inference 
-Inference needs assumptions. 
 
-- Point estimation $\hat{\theta}(X)$
+## Scope of statistical inference
 
-- Confidence interval $P(\hat{\theta}_L(X)\leq\theta\leq\hat{\theta}_U(X))\geq 1- \alpha$
+Inference needs assumptions.
 
-- Hypothesis testing : reject $H_0$ if $X\in\mathcal{R}$, $H_0 :\theta=\theta_0$
+-   Point estimation $\hat{\theta}(X)$
 
-  - Testing 
-$\mathcal{R}^c=\{X:\hat{\theta}_L(X)\leq\theta_0\leq\hat{\theta}_U(X)\}$ (dual of confidence interval)
-  
-  - Asymmetry: can reject but cannot *confirm*
+-   Confidence interval
+    $P(\hat{\theta}_L(X)\leq\theta\leq\hat{\theta}_U(X))\geq 1- \alpha$
 
-## Inference for SLR 
+-   Hypothesis testing : reject $H_0$ if $X\in\mathcal{R}$,
+    $H_0 :\theta=\theta_0$
 
-### Interpretation 
-*Assuming*
-- Linearity $E(Y|X)=\alpha+\beta X$
+    -   Testing
+        $\mathcal{R}^c=\{X:\hat{\theta}_L(X)\leq\theta_0\leq\hat{\theta}_U(X)\}$
+        (dual of confidence interval)
 
-- Homoscedasticity $Var(\varepsilon_i)=\sigma_0^2$
+    -   Asymmetry: can reject but cannot *confirm*
 
-- Independence of errors $\varepsilon_i\perp\varepsilon_j$
+## Inference for SLR
 
-- Normality of errors $\varepsilon_i\sim N(0,\sigma_0^2)$
+### Interpretation
+
+*Assuming* - Linearity $E(Y|X)=\alpha+\beta X$
+
+-   Homoscedasticity $Var(\varepsilon_i)=\sigma_0^2$
+
+-   Independence of errors $\varepsilon_i\perp\varepsilon_j$
+
+-   Normality of errors $\varepsilon_i\sim N(0,\sigma_0^2)$
 
 ```{r, echo=FALSE}
 summary(lmod)
@@ -176,95 +235,120 @@ summary(lmod)
 
 *Quantities to interpret out of output*
 
-- regression coefficients $\alpha$, $\beta$ as
-    - point estimates:
-$\hat{\alpha}=\bar{y}- \hat{\beta}\bar{x}$ and $\hat{\beta}=\frac{\sum_i (x_i- \bar{x})(y_i- \bar{y})}{\sum_i (x_i- \bar{x})$2}
-      
-    - sampling distribution 
-$\hat{\beta}\sim N(\beta,\frac{\sigma_0^2}{[\sum_i (x_i- \bar{x})^2]^{- 1}})$, $\bar{y}\perp\hat{\beta}\bar{x}$ 
+-   regression coefficients $\alpha$, $\beta$ as
+    -   point estimates: $\hat{\alpha}=\bar{y}- \hat{\beta}\bar{x}$ and
+        \$\hat{\beta}=\frac{\sum_i (x_i- \bar{x})(y_i- \bar{y})}{\sum_i (x_i- \bar{x})$2}
 
-- error variance $\sigma_0^2$
-    - error variance from residuals 
-$r_i=y_i- \hat{y}_i$ to $\hat{\sigma}^2=\frac{1}{n- 2}\sum_i r_i^2$ 
-      
-    - residual variance 
-$\hat{\sigma}^2\sim\sigma_0^2\chi_{n- 2}^2/(n- 2)$ note that $(\hat{\alpha},\hat{\beta})\perp\hat{\sigma}^2$
+    -   sampling distribution
+        $\hat{\beta}\sim N(\beta,\frac{\sigma_0^2}{[\sum_i (x_i- \bar{x})^2]^{- 1}})$,
+        $\bar{y}\perp\hat{\beta}\bar{x}$
+-   error variance $\sigma_0^2$
+    -   error variance from residuals $r_i=y_i- \hat{y}_i$ to
+        $\hat{\sigma}^2=\frac{1}{n- 2}\sum_i r_i^2$
 
-- prediction: $y_{new}=\alpha+\beta x_{new}+\varepsilon_{new}$
+    -   residual variance
+        $\hat{\sigma}^2\sim\sigma_0^2\chi_{n- 2}^2/(n- 2)$ note that
+        $(\hat{\alpha},\hat{\beta})\perp\hat{\sigma}^2$
+-   prediction: $y_{new}=\alpha+\beta x_{new}+\varepsilon_{new}$
 
-    
-### Test of significance 
-Under $H_0 :\beta=0$, $\frac{\hat{\beta}}{\hat{\sigma}[\sum_i (x_i- \bar{x})^2]^{- 1/2}}\sim t_{n- 2}$
-Under $H_0 :\alpha=0$, $\frac{\hat{\alpha}}{\hat{\sigma}[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}]^{1/2}}\sim t_{n- 2}$
+### Test of significance
 
-Remark: many problems with t- value, needs *normality* and *independence*. However, even when assumptions don't hold, can somehow make it work. 
+Under $H_0 :\beta=0$,
+$\frac{\hat{\beta}}{\hat{\sigma}[\sum_i (x_i- \bar{x})^2]^{- 1/2}}\sim t_{n- 2}$
+Under $H_0 :\alpha=0$,
+$\frac{\hat{\alpha}}{\hat{\sigma}[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}]^{1/2}}\sim t_{n- 2}$
+
+Remark: many problems with t- value, needs *normality* and
+*independence*. However, even when assumptions don't hold, can somehow
+make it work.
 
 ## ANOVA and R2
+
 ### ANOVA
 
-Decomposition of variation: recall in Galton's example, we see variance introduced by parent's height and intrinsic variance.
+Decomposition of variation: recall in Galton's example, we see variance
+introduced by parent's height and intrinsic variance.
 
-![When $x$ is not known, the best predictor of $y$ is $\bar{y}$ and the variation is denoted by the dotted line. When $x$ is known, we can predict $y$ more accurately by the solid line. $R^2$ is related to the ratio of these two variances.
-](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/galton.png)
+![When $x$ is not known, the best predictor of $y$ is $\bar{y}$ and the
+variation is denoted by the dotted line. When $x$ is known, we can
+predict $y$ more accurately by the solid line. $R^2$ is related to the
+ratio of these two
+variances.](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/galton.png)
 
-We use analysis of variance: 
+We use analysis of variance:
 $$\underbrace{\sum_i(y_i- \bar{y})^2}_{SST}=\underbrace{\sum_i(y_i- \hat{y})^2}_{SSE}+\underbrace{\sum_i(\hat{y}_i- \bar{y})^2}_{SSR}$$
 
-- $SST$: total variation
+-   $SST$: total variation
 
-- $SSE$: unexplained variation
+-   $SSE$: unexplained variation
 
-- $SSR$: variation explained by regression
+-   $SSR$: variation explained by regression
 
 ### Goodness of fit
-Or $R^2$ the coefficient of determination to assess prediction power. $$R^2=1- \frac{\sum_i (y_i- \hat{y_i})^2}{\sum_i (y_i- \bar{y})^2}=\frac{SSR}{SST}$$
+
+Or $R^2$ the coefficient of determination to assess prediction power.
+$$R^2=1- \frac{\sum_i (y_i- \hat{y_i})^2}{\sum_i (y_i- \bar{y})^2}=\frac{SSR}{SST}$$
 Note that for SLR, $R^2=\rho_{X,Y}^2$.
 
-$R^2$ gives an idea of how much information our predictors give to our response: goodness of fit. However, there is no "threshold" value for a good $R^2$. 
+$R^2$ gives an idea of how much information our predictors give to our
+response: goodness of fit. However, there is no "threshold" value for a
+good $R^2$.
 
-![Four simulated
-datasets where $R^2$ is about 0.65. The plot on the upper left is well- behaved for $R^2$. In the plot on the upper right, the residual variation is smaller than the first plot but the variation in $x$ is also smaller so $R^2$ is about the same. In the plot on the lower left, the fit looks strong except for a couple of outliers while on the lower right, the relationship is quadratic.](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/R2_comp.png)
+![Four simulated datasets where $R^2$ is about 0.65. The plot on the
+upper left is well- behaved for $R^2$. In the plot on the upper right,
+the residual variation is smaller than the first plot but the variation
+in $x$ is also smaller so $R^2$ is about the same. In the plot on the
+lower left, the fit looks strong except for a couple of outliers while
+on the lower right, the relationship is
+quadratic.](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/R2_comp.png)
 
-We can also rewrite F- test in terms of $SSE$, $SSR$: note that $SSE\sim\sigma^2\chi_{n- 2}^2$, $SSR\sim\sigma^2\chi_1^2$ with $SSE\perp SSR$. Then the F- test for $H_0 :\beta=0$ :
+We can also rewrite F- test in terms of $SSE$, $SSR$: note that
+$SSE\sim\sigma^2\chi_{n- 2}^2$, $SSR\sim\sigma^2\chi_1^2$ with
+$SSE\perp SSR$. Then the F- test for $H_0 :\beta=0$ :
 $$F=\frac{SSR}{SSE/(n- 2)}\sim F_{1,n- 2}$$
 
+# Lecture 4: Prediction
 
-# Lecture 4: Prediction 
+*Recap* How to make sense of $R$ output:
 
-*Recap* 
-How to make sense of $R$ output:
+-   Parameter estimation
 
-- Parameter estimation
+-   ANOVA analysis of variance: $SST=SSE+SSR$
 
-- ANOVA analysis of variance: $SST=SSE+SSR$
+-   Inference under assumptions:
 
-- Inference under assumptions:
-  
-  - linearity
-  
-  - homoscedasticity
-    
-  - independence of errors
-    
-  - normality of errors
+    -   linearity
 
+    -   homoscedasticity
+
+    -   independence of errors
+
+    -   normality of errors
 
 ## Scope of prediction
-We observe a new set of observation not used to estimate $\hat{\beta}$: $y_{new}=\alpha+x_{new}\cdot\beta+\epsilon_{new}$. 
 
-- Estimate: $\hat{y}_{new}=\hat{\alpha}+x_{new}\cdot\hat{\beta}$
+We observe a new set of observation not used to estimate $\hat{\beta}$:
+$y_{new}=\alpha+x_{new}\cdot\beta+\epsilon_{new}$.
 
-- Confidence interval: to calculate CI, we need to compute the variance of our estimator 
-$$Var(\hat{y}_{new}|x, x_{new})=Var(\hat{\alpha}+ x_{new}\cdot\hat{\beta}|x,x_{new})\\
-=\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)$$
+-   Estimate: $\hat{y}_{new}=\hat{\alpha}+x_{new}\cdot\hat{\beta}$
 
-- Sampling distribution: $\hat{y}_{new}\sim N\big(\alpha+x_{new}\cdot\beta,\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)\big)$ and can infer the *CI* for mean of $y_{new}$: $C_q=\big[\hat{\alpha}+ x_{new}\cdot\hat{\beta}\pm t_{n- 2, 1- q/2}\cdot\sqrt{\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)}\big] $
+-   Confidence interval: to calculate CI, we need to compute the
+    variance of our estimator
+    $$Var(\hat{y}_{new}|x, x_{new})=Var(\hat{\alpha}+ x_{new}\cdot\hat{\beta}|x,x_{new})\\
+    =\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)$$
 
-- Prediction interval: we're typically interested in an interval for the actual observation $y_{new}$ rather than the mean of $y_{new}$. To calculate the variance of the prediction, see that: 
-$$Var(y_{new}- \hat{y}_{new}|x, x_{new})=Var(y|x, x_{new})- Var(\hat{y}_{new}|x, x_{new})\\
-=\sigma^2\big[ 1+\frac{1}{n}+\frac{(\bar{x}- x_{new})^2}{\sum_j (x_j- \bar{x})^2}\big]$$
-which yields *prediction interval*: $P_q=\big[\hat{\alpha}+ x_{new}\cdot\hat{\beta}\pm t_{n- 2, 1- q/2}\cdot\sqrt{\sigma^2\big(1+\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)}\big]$
+-   Sampling distribution:
+    $\hat{y}_{new}\sim N\big(\alpha+x_{new}\cdot\beta,\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)\big)$
+    and can infer the *CI* for mean of $y_{new}$:
+    \$C_q=\big[\hat{\alpha}+ x_{new}\cdot\hat{\beta}\pm t_{n- 2, 1- q/2}\cdot\sqrt{\sigma^2\big(\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)}\big] \$
 
+-   Prediction interval: we're typically interested in an interval for
+    the actual observation $y_{new}$ rather than the mean of $y_{new}$.
+    To calculate the variance of the prediction, see that:
+    $$Var(y_{new}- \hat{y}_{new}|x, x_{new})=Var(y|x, x_{new})- Var(\hat{y}_{new}|x, x_{new})\\
+    =\sigma^2\big[ 1+\frac{1}{n}+\frac{(\bar{x}- x_{new})^2}{\sum_j (x_j- \bar{x})^2}\big]$$
+    which yields *prediction interval*:
+    $P_q=\big[\hat{\alpha}+ x_{new}\cdot\hat{\beta}\pm t_{n- 2, 1- q/2}\cdot\sqrt{\sigma^2\big(1+\frac{1}{n}+\frac{(x_{new}- \bar{x})^2}{\sum_j (x_j- \bar{x})^2}\big)}\big]$
 
 ```{r}
 newdata <- data.frame(midparentHeight=70)
@@ -273,8 +357,12 @@ predict(lmod, newdata, interval='confidence')
 predict(lmod, newdata, interval='predict')
 ```
 
-## Assumptions 
-We check our assumptions on the residuals using the diagnostic plots. Residuals vs fitted to check for I- IV (linearity, homoscedasticity, no collinearity, independent errors) and Q- Q to check for V (normality of errors). 
+## Assumptions
+
+We check our assumptions on the residuals using the diagnostic plots.
+Residuals vs fitted to check for I- IV (linearity, homoscedasticity, no
+collinearity, independent errors) and Q- Q to check for V (normality of
+errors).
 
 ```{r, echo=FALSE}
 par(mfrow=c(1,2))
@@ -283,90 +371,116 @@ plot(lmod, which=2)
 ```
 
 ### If normality doesn't hold
-What happens when we have deviation from normal? 
 
-The normality assumption (V) can be dropped if sample size is big enough. For this, we use the Central limit theorem and Slutsky theorem. 
+What happens when we have deviation from normal?
+
+The normality assumption (V) can be dropped if sample size is big
+enough. For this, we use the Central limit theorem and Slutsky theorem.
 
 CLT:
 
--  $\hat{\beta}\to_d N\big(\beta,\sigma_0^2\big[\sum_i (x_i- \bar{x})^2\big]^{- 1}\big)$
+-   $\hat{\beta}\to_d N\big(\beta,\sigma_0^2\big[\sum_i (x_i- \bar{x})^2\big]^{- 1}\big)$
 
--  $\hat{\alpha}\to_d N\big(\alpha,\sigma_0^2\big[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}\big]\big)$
+-   $\hat{\alpha}\to_d N\big(\alpha,\sigma_0^2\big[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}\big]\big)$
 
-Note that those distribution depend on $\sigma_0^2$. We use Slutsky's theorem so that inference is valid in those expressions. Let $\hat{\sigma}^2\to_P\sigma_0^2$, then
+Note that those distribution depend on $\sigma_0^2$. We use Slutsky's
+theorem so that inference is valid in those expressions. Let
+$\hat{\sigma}^2\to_P\sigma_0^2$, then
 
--  under $H_0 :\beta=0$, $\frac{\hat{\beta}}{\hat{\sigma}[\sum_i (x_i- \bar{x})^2]^{- 1/2}}\to_d N(0,1)$
+-   under $H_0 :\beta=0$,
+    $\frac{\hat{\beta}}{\hat{\sigma}[\sum_i (x_i- \bar{x})^2]^{- 1/2}}\to_d N(0,1)$
 
+-   under $H_0 :\alpha=0$,
+    $\frac{\hat{\alpha}}{\hat{\sigma}[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}]^{- 1/2}}\to_d N(0,1)$
 
--  under $H_0 :\alpha=0$, $\frac{\hat{\alpha}}{\hat{\sigma}[\frac{1}{n}+\frac{\bar{x}^2}{\sum_i (x_i- \bar{x})^2}]^{- 1/2}}\to_d N(0,1)$
+-   For large $n$, $t_{n- 2}\to_d N(0,1)$.
 
-
--  For large $n$, $t_{n- 2}\to_d N(0,1)$. 
-
-Which justifies that normality can be dropped if the sample size is large enough. 
+Which justifies that normality can be dropped if the sample size is
+large enough.
 
 ### If heteroscedascity?
-Assume now that $Var(\epsilon_i)=\sigma_i^2$. We are outside the framework of homoscedastic errors. 
 
--  If $\sigma_i$ are known, we can use the sandwich formula: $Var(\hat{\beta})=\frac{\sum_i\sigma_i^2 (x_i- \bar{x})^2}{[\sum_i (x_i- \bar{x})^2]^2}$ 
+Assume now that $Var(\epsilon_i)=\sigma_i^2$. We are outside the
+framework of homoscedastic errors.
 
--  However, we can not usually estimate $\sigma_i^2$. But by WLLN with the residuals $r_i$, the following holds true: 
-$$\widehat{Var{\hat{\beta}}}:=\frac{\sum_i r_i^2 (x_i- \bar{x})^2}{[\sum_j (x_j- \bar{x})^2]^2}\to_P Var(\hat{\beta})$$
-So we can give some slack to the homoscedascity assumption without loosing inference. The point estimate is still gonna be valid, *however* this needs for standard error and inferences to be adjusted. 
+-   If $\sigma_i$ are known, we can use the sandwich formula:
+    $Var(\hat{\beta})=\frac{\sum_i\sigma_i^2 (x_i- \bar{x})^2}{[\sum_i (x_i- \bar{x})^2]^2}$
 
+-   However, we can not usually estimate $\sigma_i^2$. But by WLLN with
+    the residuals $r_i$, the following holds true:
+    $$\widehat{Var{\hat{\beta}}}:=\frac{\sum_i r_i^2 (x_i- \bar{x})^2}{[\sum_j (x_j- \bar{x})^2]^2}\to_P Var(\hat{\beta})$$
+    So we can give some slack to the homoscedascity assumption without
+    loosing inference. The point estimate is still gonna be valid,
+    *however* this needs for standard error and inferences to be
+    adjusted.
 
+# Lecture 5: Inference in linear models
 
-# Lecture 5: Inference in linear models 
 ## Assumptions in LM
-*Recap* 
-Assumption for inference :
-Check residuals plots
 
--  Normality: $\varepsilon_i\sim\mathcal{N}(0,1)$ 
+*Recap* Assumption for inference : Check residuals plots
 
--  Homoscedasticity: $Var(\varepsilon_i)=\sigma_0^2$ under mild conditions (large sample size), can get a valid estimator even without homoscedasticity using SSR
+-   Normality: $\varepsilon_i\sim\mathcal{N}(0,1)$
 
--  Independence of errors
+-   Homoscedasticity: $Var(\varepsilon_i)=\sigma_0^2$ under mild
+    conditions (large sample size), can get a valid estimator even
+    without homoscedasticity using SSR
 
--  Linearity 
+-   Independence of errors
+
+-   Linearity
 
 ### Inference when non linearity?
-  
-Non linearity: assume model $E(Y|X)=\alpha+\beta X+\delta(X)$ where $\delta(X)$ models the non linearity. By assumption of LS, $E(\delta(X))=E(X\delta(X))=0$. Interpretation of our estimator changes slightly, however still possible in terms of variation of quantities with care. Inference is affected however, 
-Let $Y_i=\alpha+\beta X_i+\delta(X_i)+\varepsilon_i$ and set $\hat{\varepsilon}_i=\delta(X_i)+\varepsilon_i$. Therefore: 
-Then $\hat{\beta}\underset{d}{\rightarrow}N(\beta,\frac{\delta_{\hat{\varepsilon}}^2}{\sum_i (x_i- \bar{x})^2})$
+
+Non linearity: assume model $E(Y|X)=\alpha+\beta X+\delta(X)$ where
+$\delta(X)$ models the non linearity. By assumption of LS,
+$E(\delta(X))=E(X\delta(X))=0$. Interpretation of our estimator changes
+slightly, however still possible in terms of variation of quantities
+with care. Inference is affected however, Let
+$Y_i=\alpha+\beta X_i+\delta(X_i)+\varepsilon_i$ and set
+$\hat{\varepsilon}_i=\delta(X_i)+\varepsilon_i$. Therefore: Then
+$\hat{\beta}\underset{d}{\rightarrow}N(\beta,\frac{\delta_{\hat{\varepsilon}}^2}{\sum_i (x_i- \bar{x})^2})$
 Noting $\sigma^2=\sigma_0 ^2+E(\delta(X)^2)$ yields
 $\hat{\beta}\underset{d}{\rightarrow}N(\beta,\frac{\sigma^2}{\sum_i (x_i- \bar{x})^2})$
 
-Slight caveat, we assume here that $\sigma_0 ^2+E(\delta(X)^2)$ means $\delta(X_i)+\varepsilon_i$ are uncorrelated. Moreover, we need to be careful of fixed or random design. If random design, no issue with heteroscedasticity since it averages out. If fixed design, we need to also take care of heteroscedasticity. 
+Slight caveat, we assume here that $\sigma_0 ^2+E(\delta(X)^2)$ means
+$\delta(X_i)+\varepsilon_i$ are uncorrelated. Moreover, we need to be
+careful of fixed or random design. If random design, no issue with
+heteroscedasticity since it averages out. If fixed design, we need to
+also take care of heteroscedasticity.
 
 ### What if our errors aren't independent?
 
-Independence: $Cov(\varepsilon_i,\varepsilon_j)=0$. 
+Independence: $Cov(\varepsilon_i,\varepsilon_j)=0$.
 
-However, if residuals not uncorrelated, we have 
-$Cov(\varepsilon_i,\varepsilon_j)=\sigma_{ij}$ then $Var(\hat{\beta})=\frac{\sum_{i,j}\sigma_{ij}(x_i- \bar{x})(x_j- \bar{x})}{(\sum_i (x_i- \bar{x})^2)^2}$
+However, if residuals not uncorrelated, we have
+$Cov(\varepsilon_i,\varepsilon_j)=\sigma_{ij}$ then
+$Var(\hat{\beta})=\frac{\sum_{i,j}\sigma_{ij}(x_i- \bar{x})(x_j- \bar{x})}{(\sum_i (x_i- \bar{x})^2)^2}$
 
-Central limit theorem only holds under *weak dependence* ! Independence is a very strong assumption, weakening it is possible however it's not possible to get rid of it contrary to heteroscedasticity for example. Usually, we do not get around it, but try to model the dependence or only keep the point estimate. 
+Central limit theorem only holds under *weak dependence* ! Independence
+is a very strong assumption, weakening it is possible however it's not
+possible to get rid of it contrary to heteroscedasticity for example.
+Usually, we do not get around it, but try to model the dependence or
+only keep the point estimate.
 
 Implications:
 
--  point estimate is still valid
+-   point estimate is still valid
 
--  standard error estimate is *invalid*
+-   standard error estimate is *invalid*
 
--  *interpretation* different !
+-   *interpretation* different !
 
 ## Scatterplot and modelling
-Data analysis: overview of the data
-Scatterplots relevant when not too many variables. 
+
+Data analysis: overview of the data Scatterplots relevant when not too
+many variables.
 
 ```{r, echo=FALSE}
 library('datarium')
 data(marketing, package='datarium')
 plot(marketing)
 ```
-
 
 ### Multiple linear regression
 
@@ -375,9 +489,7 @@ res.lm <- lm(sales ~ youtube+facebook+newspaper, data=marketing)
 summary(res.lm)
 ```
 
-
-Equivalent to list all variables or to use $\tilde$. 
-
+Equivalent to list all variables or to use $\tilde$.
 
 ```{r, echo=FALSE}
 res.lm <- lm(sales ~ ., data=marketing) 
@@ -388,38 +500,50 @@ MLR is a generalisation of SLR.
 
 $$y_i=\alpha+\beta_1 x_{i1}+\beta_2 x_{i2}+\dots+\beta_p x_{ip}+\varepsilon_i$$
 
-Idea with MLR is to observe variations of our variable with a change of each covariate, when *all others are fixed*. 
+Idea with MLR is to observe variations of our variable with a change of
+each covariate, when *all others are fixed*.
 
-Back to SLR : $Y=\alpha+\beta X+\varepsilon$, interpretation with confounders so writing $Y=Z+\varepsilon'$. This can be rewritten as $X=YZ+\varepsilon''$ where $Z$ is the matrix of confounders. And the interest of the regression depends on our identification of confounders. This is the backing behind the idea of identifying change with "other covariates fixed". 
-MLR is a $p$- component estimation problem of $\beta$ (we can get rid of $\alpha$ by substracting the mean). Note that $y_i=x_i^T\beta+\varepsilon_i$ in MLR. 
+Back to SLR : $Y=\alpha+\beta X+\varepsilon$, interpretation with
+confounders so writing $Y=Z+\varepsilon'$. This can be rewritten as
+$X=YZ+\varepsilon''$ where $Z$ is the matrix of confounders. And the
+interest of the regression depends on our identification of confounders.
+This is the backing behind the idea of identifying change with "other
+covariates fixed". MLR is a $p$- component estimation problem of $\beta$
+(we can get rid of $\alpha$ by substracting the mean). Note that
+$y_i=x_i^T\beta+\varepsilon_i$ in MLR.
 
+Our model rewrites to : $$Y=X\beta+\varepsilon$$
 
-Our model rewrites to : 
-$$Y=X\beta+\varepsilon$$
-
-with $Y=(y_1,\dots, y_n)^T,\varepsilon=(\varepsilon_1,\dots,\varepsilon_n)^T\in\mathbb{R}^n, X=(x_1,\dots, x_n)\in\mathbb{R}^{n\times p}$ where $x_i=(x_{i1},\dots, x_{ip})^T\in\mathbb{R}^p$ and $\beta=(\beta_1,\dots,\beta_p)^T\in\mathbb{R}^p$ 
+with
+$Y=(y_1,\dots, y_n)^T,\varepsilon=(\varepsilon_1,\dots,\varepsilon_n)^T\in\mathbb{R}^n, X=(x_1,\dots, x_n)\in\mathbb{R}^{n\times p}$
+where $x_i=(x_{i1},\dots, x_{ip})^T\in\mathbb{R}^p$ and
+$\beta=(\beta_1,\dots,\beta_p)^T\in\mathbb{R}^p$
 
 ### Least squares in MLR
-notation: $||a||^2=\sum_i a_i^2$ 
 
-To estimate the LS solution, use the MLE for independent normal errors, then:
+notation: $||a||^2=\sum_i a_i^2$
+
+To estimate the LS solution, use the MLE for independent normal errors,
+then:
 
 $$\hat{\beta}\in\arg\min_{b\in\mathbb{R}^p}||Y- Xb||^{2}$$
 
-We fit a p- hyperplane through our data in an n- dimensional space. We might have no solutions, ..., even infinite number of solutions. 
+We fit a p- hyperplane through our data in an n- dimensional space. We
+might have no solutions, ..., even infinite number of solutions.
 
 A useful trick is to rewrite the following:
 
+```{=tex}
 \begin{eqnarray*}
 ||Y- Xb||^2 &=& (Y- Xb)^T(Y- Xb)\\
 &=& (Y^T+b^T X^T)(Y- Xb)\\
 &=& Y^T Y+b^T X^T X b- 2 Y^T X b  
 \end{eqnarray*}
-
+```
 Gradient of SS : $\nabla_b ||Y- Xb||^2=2(X^T X b- X^T Y)= 0$
 
-
-Which yields if $X$ is full rank, finally $\hat{\beta}=(X^{T}X)^{- 1}(X^{T}Y)$.
+Which yields if $X$ is full rank, finally
+$\hat{\beta}=(X^{T}X)^{- 1}(X^{T}Y)$.
 
 ## Geometrical interpretation
 
@@ -427,232 +551,354 @@ We want to picture our covariate space as the column space of $X$.
 $$\mathcal{C}(X)=\{\theta:\theta=Xb, b\in\mathbb{R}^p\}\\
 \hat{\theta}=\arg\min_\theta\{||\theta- Xb ||^2 : b\in\mathbb{R}^p\}$$
 
-The linear model is the space spanned by the $p$- columns of X. The question we're asking ourselves while fitting our linear model is: What's the closest point to $Y$ on the linear space spanned by $X$ ? This means that fitting a lm is basically obtaining a projection of $Y$ on the spanned column space of $X$. 
+The linear model is the space spanned by the $p$- columns of X. The
+question we're asking ourselves while fitting our linear model is:
+What's the closest point to $Y$ on the linear space spanned by $X$ ?
+This means that fitting a lm is basically obtaining a projection of $Y$
+on the spanned column space of $X$.
 
-Note: projection properties of $E(Y|X)=X\beta$. 
+Note: projection properties of $E(Y|X)=X\beta$.
 
-
-
-*Summary of 4,5* 
+*Summary of 4,5*
 ![](/Users/clairehe/Documents/GitHub/STATGR2022/STATGR6101/images/resume45.png)
 
 # Lecture 6: Diagnostics
 
-*Recap*
-Regression as a projection : $P_X :=X(X^T X)^{- 1}X^T$ the projection matrix or *hat matrix*. See that $P_X X=X$ and $P_Y=P_X Y=X(X^T X)^{- 1}X^T Y=X\hat{\beta}=\hat{\theta}=\hat{Y}$ gives you the fitted values $\hat{Y}$. 
+*Recap* Regression as a projection : $P_X :=X(X^T X)^{- 1}X^T$ the
+projection matrix or *hat matrix*. See that $P_X X=X$ and
+$P_Y=P_X Y=X(X^T X)^{- 1}X^T Y=X\hat{\beta}=\hat{\theta}=\hat{Y}$ gives
+you the fitted values $\hat{Y}$.
 
-Notice the dimensions of the projection matrix: $P_X=\underbrace{\underbrace{X}_{n\times p}\underbrace{(X^T X)^{- 1}}_{p\times p}\underbrace{X^T}_{p\times n}}_{n\times n}$. 
+Notice the dimensions of the projection matrix:
+$P_X=\underbrace{\underbrace{X}_{n\times p}\underbrace{(X^T X)^{- 1}}_{p\times p}\underbrace{X^T}_{p\times n}}_{n\times n}$.
 
 ## Linear model vs simple linear regression
-
 
 I.  Linearity: $y=X\beta+\varepsilon$
 
 II. Strict exogeneity: $E(\varepsilon|X)=0$ see fixed and random design
-Note that this emplies the weaker assumption of simple linear models : $E(\varepsilon)=E(E(\varepsilon|X))=0$. Stronger part comes from the conditional. 
+    Note that this emplies the weaker assumption of simple linear models
+    : $E(\varepsilon)=E(E(\varepsilon|X))=0$. Stronger part comes from
+    the conditional.
 
-III. No multicollinearity $P(rank(X)=p)=1$ for fixed and random design, our matrix is almost surely full column rank which enables us to invert $X^T X$. In geometrical terms, we span in a $rank(X)$- dimension hyperplane, so such a regression doesn't allow us to separate the different effects individually.
-For fixed design, just assume column full rank. If this assumption is broken, inference on $\beta$ is impossible without additional assumptions. 
-Caveat when random design like suppose we generate a p- dimensional gaussian vector with independent entries, it "suffices" to assume that it is full rank almost surely. 
+III. No multicollinearity $P(rank(X)=p)=1$ for fixed and random design,
+     our matrix is almost surely full column rank which enables us to
+     invert $X^T X$. In geometrical terms, we span in a $rank(X)$-
+     dimension hyperplane, so such a regression doesn't allow us to
+     separate the different effects individually. For fixed design, just
+     assume column full rank. If this assumption is broken, inference on
+     $\beta$ is impossible without additional assumptions. Caveat when
+     random design like suppose we generate a p- dimensional gaussian
+     vector with independent entries, it "suffices" to assume that it is
+     full rank almost surely.
 
-IV. Spherical errors: $Var(\varepsilon|X)=\sigma^2 I_n$ sums up homoscedasticity ($E(\varepsilon_i^2|X)=\sigma^2$) and uncorrelated errors ($E(\varepsilon_i\varepsilon_j |X)=0,\i\neq j$). 
+IV. Spherical errors: $Var(\varepsilon|X)=\sigma^2 I_n$ sums up
+    homoscedasticity ($E(\varepsilon_i^2|X)=\sigma^2$) and uncorrelated
+    errors ($E(\varepsilon_i\varepsilon_j |X)=0,\i\neq j$).
 
-V.  Normality $\varepsilon|X\sim\mathcal{N}(0,\sigma^2 I_n)$. 
+V.  Normality $\varepsilon|X\sim\mathcal{N}(0,\sigma^2 I_n)$.
 
-Note that reading any linear model from R, we have to  assume all these five assumptions. 
+Note that reading any linear model from R, we have to assume all these
+five assumptions.
 
 ## Similarities with SLR: finite sample properties
-Here are some finite sample properties. 
 
--  Under assumptions I- III:
-  
-    -  $E(\hat{\beta}|X)=\beta$
--  Under I- IV:
+Here are some finite sample properties.
 
-    -  $Var(\hat{\beta}|X)=\sigma^2(X^T X)^{- 1}$ (careful here, adding constants or not in $X$ impacts the variance)
-    - BLUE estimator (Gauss Markov)
-    - $Cov(\hat{\beta},\hat{\sigma}^2 |X)=0$
-    - $E(\hat{\sigma}^2|X)=\sigma^2$
+-   Under assumptions I- III:
 
-- Under I- V:
+    -   $E(\hat{\beta}|X)=\beta$
 
-    - Cramer Rao lower bound is achieved
-    - $\hat{\beta}|X\sim\mathcal{N}(\beta,\sigma^2(X^T X)^{- 1})$
+-   Under I- IV:
 
+    -   $Var(\hat{\beta}|X)=\sigma^2(X^T X)^{- 1}$ (careful here, adding
+        constants or not in $X$ impacts the variance)
+    -   BLUE estimator (Gauss Markov)
+    -   $Cov(\hat{\beta},\hat{\sigma}^2 |X)=0$
+    -   $E(\hat{\sigma}^2|X)=\sigma^2$
 
-Note that generalised linear models are *not* a simple generalisation of simple linear models. We will see later more extensively the differences between them. 
+-   Under I- V:
+
+    -   Cramer Rao lower bound is achieved
+    -   $\hat{\beta}|X\sim\mathcal{N}(\beta,\sigma^2(X^T X)^{- 1})$
+
+Note that generalised linear models are *not* a simple generalisation of
+simple linear models. We will see later more extensively the differences
+between them.
 
 ## T- test and F- test
- Have a hypothesis test $H_0 :\beta_j=b_j$.
 
-Under assumption I- V,  $\hat{\beta}|X\sim\mathcal{N}(\beta,\sigma^2(X^T X)^{- 1})$ allows  $\hat{\beta}_j- b_j|\{X, H_0\}\sim\mathcal{N}(0, [\sigma^2(X^T X)^{- 1}]_{jj})$
+Have a hypothesis test $H_0 :\beta_j=b_j$.
 
-Suppose $X$ doesn't have intercept, $(X^T X)$ behaves like a covariance- matrix of $X$ then how do we interpret $[(X^T X)^{- 1}]_{jj}$? Bigger variance is less straightforward in capturing the effect of $X$, variance of $X_j$ could be big, but  $[(X^T X)^{- 1}]_{jj}$ is small, so we have to be mindful, what really is interpretable is the inverse covariance matrix. 
+Under assumption I- V,
+$\hat{\beta}|X\sim\mathcal{N}(\beta,\sigma^2(X^T X)^{- 1})$ allows
+$\hat{\beta}_j- b_j|\{X, H_0\}\sim\mathcal{N}(0, [\sigma^2(X^T X)^{- 1}]_{jj})$
 
-T- test: $t=\frac{\hat{\beta}_j- b_j}{\sqrt{[\sigma^2(X^T X)^{- 1}]_{jj}}}=\frac{\hat{\beta}_j- b_j}{SE(\hat{\beta_j})}$
+Suppose $X$ doesn't have intercept, $(X^T X)$ behaves like a covariance-
+matrix of $X$ then how do we interpret $[(X^T X)^{- 1}]_{jj}$? Bigger
+variance is less straightforward in capturing the effect of $X$,
+variance of $X_j$ could be big, but $[(X^T X)^{- 1}]_{jj}$ is small, so
+we have to be mindful, what really is interpretable is the inverse
+covariance matrix.
 
-When we're not interested in not just one coefficient but a linear combination of coefficients, we can use a contrast matrix $C$ and our hypothesis becomes $H_0 :\underbrace{C^T}_{1\times p}\underbrace{\beta}_{p\times 1}=C_0$ (e.g. $c=\begin{pmatrix}0\\\dots\\0\\1\\\dots\\0\end{pmatrix}$). 
+T- test:
+$t=\frac{\hat{\beta}_j- b_j}{\sqrt{[\sigma^2(X^T X)^{- 1}]_{jj}}}=\frac{\hat{\beta}_j- b_j}{SE(\hat{\beta_j})}$
 
+When we're not interested in not just one coefficient but a linear
+combination of coefficients, we can use a contrast matrix $C$ and our
+hypothesis becomes
+$H_0 :\underbrace{C^T}_{1\times p}\underbrace{\beta}_{p\times 1}=C_0$
+(e.g. $c=\begin{pmatrix}0\\\dots\\0\\1\\\dots\\0\end{pmatrix}$).
 
-Still use t- test : $t=\frac{C^T\hat{\beta}_j- C_0}{\sqrt{\sigma^2C^T(X^T X)^{- 1}C}}$
+Still use t- test :
+$t=\frac{C^T\hat{\beta}_j- C_0}{\sqrt{\sigma^2C^T(X^T X)^{- 1}C}}$
 
-
-
- For multiple coefficient simultaneaously zero, use F- test. Consider $H_0 :\underbrace{D}_{k\times p}\underbrace{\beta}_{p\times 1}=d$ for $D$ with $k\leq p$ rows and rank.
+For multiple coefficient simultaneaously zero, use F- test. Consider
+$H_0 :\underbrace{D}_{k\times p}\underbrace{\beta}_{p\times 1}=d$ for
+$D$ with $k\leq p$ rows and rank.
 
 $$D\hat{\beta}\sim\mathcal{N}(\underbrace{D\beta}_{d},\sigma^2 D(X^T X)^{- 1}D^T)$$
-Then for the following, we recognize a chi- square distribution (if $X\sim\mathcal{N}(0,\Sigma), X^T\Sigma^1 X\sim\chi_p^2$), in particular, taking in account the degrees of freedom: $(D\hat{\beta}- d)^T [\hat{\sigma}^2 D(X^T X)^{- 1}D^T]^{- 1}(D\hat{\beta}- d)$ follows a sort of chi- square. Total degrees of freedom: $k$
+Then for the following, we recognize a chi- square distribution (if
+$X\sim\mathcal{N}(0,\Sigma), X^T\Sigma^1 X\sim\chi_p^2$), in particular,
+taking in account the degrees of freedom:
+$(D\hat{\beta}- d)^T [\hat{\sigma}^2 D(X^T X)^{- 1}D^T]^{- 1}(D\hat{\beta}- d)$
+follows a sort of chi- square. Total degrees of freedom: $k$
 
-Hence, $\frac{1}{k}(D\hat{\beta}- d)^T [\hat{\sigma}^2 D(X^T X)^{- 1}D^T]^{- 1}(D\hat{\beta}- d)\overset{H_0}{\sim}F_{r, n- p}$ where $r=\frac{\hat{\sigma}^2}{\sigma^2}$.
+Hence,
+$\frac{1}{k}(D\hat{\beta}- d)^T [\hat{\sigma}^2 D(X^T X)^{- 1}D^T]^{- 1}(D\hat{\beta}- d)\overset{H_0}{\sim}F_{r, n- p}$
+where $r=\frac{\hat{\sigma}^2}{\sigma^2}$.
 
-Different interpretation using the following $\tilde{\beta}=\arg\min_{b}||y- Xb||_2^2$ subject to $Db=d$. Can be solved using the Lagrangian method. Gives us an alternative expression for F- test, $F=\frac{(\tilde{r}^T\tilde{r}- r^T r)/k}{r^T /(n- p)}$ where $\tilde{r}=y- X\tilde{\beta}$. 
+Different interpretation using the following
+$\tilde{\beta}=\arg\min_{b}||y- Xb||_2^2$ subject to $Db=d$. Can be
+solved using the Lagrangian method. Gives us an alternative expression
+for F- test, $F=\frac{(\tilde{r}^T\tilde{r}- r^T r)/k}{r^T /(n- p)}$
+where $\tilde{r}=y- X\tilde{\beta}$.
 
-In this context, the residuals are better in the full model than the restricted residuals (because constraint). So the fit without constraint is always better, however, how much better is it ? The fit is better because no constraints gives us more degrees of freedom. We want to look at per degrees of freedom, how much improvement we get without the constraint. This way of writing F shows us that F is a reasonable way of checking how likely our hypothesis is. Be mindful of the scaling. 
+In this context, the residuals are better in the full model than the
+restricted residuals (because constraint). So the fit without constraint
+is always better, however, how much better is it ? The fit is better
+because no constraints gives us more degrees of freedom. We want to look
+at per degrees of freedom, how much improvement we get without the
+constraint. This way of writing F shows us that F is a reasonable way of
+checking how likely our hypothesis is. Be mindful of the scaling.
 
 ## Influencial points
+
 ### Leverage
-We define leverage using the hat matrix $H$: $\ell_i=h_{ii}=[X(X^T X)^{- 1}X^T]_{ii}$. 
 
-$\hat{Y}=HY\Rightarrow\hat{Y}_i=\sum_{j=1}^n h_{ij}Y_j$ so fitted values is a linear combination of all observations. We can argue that we want to leverage our responses to stabilise our fitted values (we don't want to dilute too much by spreading too big our leverage, but we also want to spread enough so that we have a coherent fit- e.g. expect impact of the ii- th value bigger than the ij- th). Suppose $h_{ii}$ is big, this means that to fit the i- th obversation, we're trying hard to not deviate from the i- th observation. This is the leverage. 
+We define leverage using the hat matrix $H$:
+$\ell_i=h_{ii}=[X(X^T X)^{- 1}X^T]_{ii}$.
 
-Recalling that $H^2=H$, $\ell_i=\ell_i^2+\sum_{j\neq i}P_{ij}^2\in [0,1]$ can be viewed as a weight. We don't want $\ell_i$ to be too close to 0, would be underfitting, and in the opposite situation, $\ell_i=1$ would indicate overfitting on the i- th observation.
+$\hat{Y}=HY\Rightarrow\hat{Y}_i=\sum_{j=1}^n h_{ij}Y_j$ so fitted values
+is a linear combination of all observations. We can argue that we want
+to leverage our responses to stabilise our fitted values (we don't want
+to dilute too much by spreading too big our leverage, but we also want
+to spread enough so that we have a coherent fit- e.g. expect impact of
+the ii- th value bigger than the ij- th). Suppose $h_{ii}$ is big, this
+means that to fit the i- th obversation, we're trying hard to not
+deviate from the i- th observation. This is the leverage.
+
+Recalling that $H^2=H$,
+$\ell_i=\ell_i^2+\sum_{j\neq i}P_{ij}^2\in [0,1]$ can be viewed as a
+weight. We don't want $\ell_i$ to be too close to 0, would be
+underfitting, and in the opposite situation, $\ell_i=1$ would indicate
+overfitting on the i- th observation.
 
 ### Intuition of leverage
-Leverage can tell us how stable our prediction is. But it can also give us information on the variance of residuals. Assuming errors are uncorrelated and homoscedastic. 
 
-For $r=y- X\hat{\beta}=y- \hat{y}=(I- H)y$, note that $y=My=\underbrace{MX\beta}_{=0}+M\varepsilon$, then $Var(r|X)=\sigma^2(I_n- H)$ (see slides for calculation). Our residuals are correlated since $r=M\varepsilon$ with $M=I- H$ (residuals are linear combination of errors)- but doesn't necessarily mean the errors are, it makes it however very hard to check for the errors. To assess how correlated they are, we see that variance of individual residual $r_i=\sigma^2 (1- \ell_i)$. We want to have *high variance* of residuals. We want to make sure we are not pretending to estimating $\varepsilon_i$ which is impossible. In this case, we are always overfitting the errors, but we want to control how much using our residuals by controlling the variance of the residuals to be large enough. So if leverage is too close to 1, we have small residuals... 
+Leverage can tell us how stable our prediction is. But it can also give
+us information on the variance of residuals. Assuming errors are
+uncorrelated and homoscedastic.
 
-Note that leverage is not dependent on observations but on our design matrix through $H$ !! 
+For $r=y- X\hat{\beta}=y- \hat{y}=(I- H)y$, note that
+$y=My=\underbrace{MX\beta}_{=0}+M\varepsilon$, then
+$Var(r|X)=\sigma^2(I_n- H)$ (see slides for calculation). Our residuals
+are correlated since $r=M\varepsilon$ with $M=I- H$ (residuals are
+linear combination of errors)- but doesn't necessarily mean the errors
+are, it makes it however very hard to check for the errors. To assess
+how correlated they are, we see that variance of individual residual
+$r_i=\sigma^2 (1- \ell_i)$. We want to have *high variance* of
+residuals. We want to make sure we are not pretending to estimating
+$\varepsilon_i$ which is impossible. In this case, we are always
+overfitting the errors, but we want to control how much using our
+residuals by controlling the variance of the residuals to be large
+enough. So if leverage is too close to 1, we have small residuals...
+
+Note that leverage is not dependent on observations but on our design
+matrix through $H$ !!
 
 ### Example: simple linear regression
-The leverage for SLR $y=\alpha+\beta x+\varepsilon$, then $h_{ii}=\frac{1}{n}+\frac{(x_i- \bar{x})^2}{\sum_{i=1}^n (x_i- \bar{x})^2}$, leverage only depends on the distance $|x_i- \bar{x}|$. For SLR, leverage=levier, the further you are from the center, the bigger your leverage is since moving a little is gonna shift much more. 
 
+The leverage for SLR $y=\alpha+\beta x+\varepsilon$, then
+$h_{ii}=\frac{1}{n}+\frac{(x_i- \bar{x})^2}{\sum_{i=1}^n (x_i- \bar{x})^2}$,
+leverage only depends on the distance $|x_i- \bar{x}|$. For SLR,
+leverage=levier, the further you are from the center, the bigger your
+leverage is since moving a little is gonna shift much more.
 
-Note: For mid- term: redo calculation in the classes, read Faraway's book on linear regression, especially how to read and interpret outputs. 
+Note: For mid- term: redo calculation in the classes, read Faraway's
+book on linear regression, especially how to read and interpret outputs.
 
-# Lecture 7 : Explanations 
-*Mid- term instructions* 
-Goes to what we cover to Monday. 
-Chapters 1- 6 covered. Some less discussed but need to know, for ex:
+# Lecture 7 : Explanations
 
-- Chapter 2
+*Mid- term instructions* Goes to what we cover to Monday. Chapters 1- 6
+covered. Some less discussed but need to know, for ex:
 
-  - QR decomposition
-  - Gauss Markov Theorem
+-   Chapter 2
+
+    -   QR decomposition
+    -   Gauss Markov Theorem
 
 Can skip because will cover later but good to know
 
-- Chapter 3
-    
-  - Bootstrap
-  - Permutation tests
-- Chapter 4 
-    
-  - Autoregression
-- Chapter 5
-  
-  - Less straightforward to use it but read it as a complement
-  
+-   Chapter 3
+
+    -   Bootstrap
+    -   Permutation tests
+
+-   Chapter 4
+
+    -   Autoregression
+
+-   Chapter 5
+
+    -   Less straightforward to use it but read it as a complement
+
 ## Influential points (cont.)
+
 ### Leverage (cont.)
-Why do we not want high- leverage (close to 1) ?
-Because a leverage close to 1 implies if the observations are noisy that we're explaining noise which is impossible. 
-Another way of seeing it, is that we have $p$- leverages, but we need to explain $n$ points. If one individual takes most of the leverage, we might suspect it's taking too much from the other observations. Another risk is to fit too much towards an outlier. Here, careful of outliers vs influential points. (- > think of leverage influence with a simple linear regression might suffice most of the time, big noise of a high leverage data point will have more of lever effect than big noise on a low leverage data point)
 
-Suppose we have 100 data points with 2 with high leverage: fit isn't necessary wrong, but caution, refit with 98 data points and re- assess about the influential points (if nothing changes, nothing wrong with the fit, if changes a lot, wanna modify or model). 
+Why do we not want high- leverage (close to 1) ? Because a leverage
+close to 1 implies if the observations are noisy that we're explaining
+noise which is impossible. Another way of seeing it, is that we have
+$p$- leverages, but we need to explain $n$ points. If one individual
+takes most of the leverage, we might suspect it's taking too much from
+the other observations. Another risk is to fit too much towards an
+outlier. Here, careful of outliers vs influential points. (- \> think of
+leverage influence with a simple linear regression might suffice most of
+the time, big noise of a high leverage data point will have more of
+lever effect than big noise on a low leverage data point)
 
+Suppose we have 100 data points with 2 with high leverage: fit isn't
+necessary wrong, but caution, refit with 98 data points and re- assess
+about the influential points (if nothing changes, nothing wrong with the
+fit, if changes a lot, wanna modify or model).
 
 ## Diagnostics
+
 ### Standardized residuals
-If we don't standard residuals, some obs. might stand out because of their high variance! We want to use the leverage of our point so that we still capture the variability, but scaling it to it's influence. 
-*Studentized residual* $=\frac{r_i}{\sqrt{\hat{\sigma}^2}(1- \ell_i)}$ 
+
+If we don't standard residuals, some obs. might stand out because of
+their high variance! We want to use the leverage of our point so that we
+still capture the variability, but scaling it to it's influence.
+*Studentized residual* $=\frac{r_i}{\sqrt{\hat{\sigma}^2}(1- \ell_i)}$
 
 ### Cook's distance
-Suppose i'm interested in the $i$- th obs predicting $y_i$. I run lm for the whole dataset and get $\hat{y}_i$ as prediction. Run lm with dataset with $i$- th observation removed. Note here $(\hat{y})_{- i})_j$ as our fitted response value obtained when excluding $i$. 
-\begin{eqnarray*}
+
+Suppose i'm interested in the $i$- th obs predicting $y_i$. I run lm for
+the whole dataset and get $\hat{y}_i$ as prediction. Run lm with dataset
+with $i$- th observation removed. Note here $(\hat{y})_{- i})_j$ as our
+fitted response value obtained when excluding $i$. \begin{eqnarray*}
 D_i &=&\frac{\sum{j=1}^n(\hat{y}_j- (\hat{y})_{- i})_j)^2}{}\\
 &=&\frac{r_i^2}{p\hat{\sigma}^2}\big[\frac{h_{ii}}{(1- h_{ii})^2}\big]
 \end{eqnarray*}
 
-$D_i$ explains how much change we get in the residuals by removing the $i$- th value. Very interpretative but computationally expensive if we do all the regressions. *But* we can actually obtain the Cook distance using only one fit and the equivalent formulation with leverage!  
+$D_i$ explains how much change we get in the residuals by removing the
+$i$- th value. Very interpretative but computationally expensive if we
+do all the regressions. *But* we can actually obtain the Cook distance
+using only one fit and the equivalent formulation with leverage!
 
-### Diagnostic plot: 
+### Diagnostic plot:
 
-- checking for homoscedasticity, *Residuals vs Fitted*: For a non- linear model, we'll get a non- linear fit, but we still want our fit to be close to the gray line
+-   checking for homoscedasticity, *Residuals vs Fitted*: For a non-
+    linear model, we'll get a non- linear fit, but we still want our fit
+    to be close to the gray line
 
-- checking for outliers *Standardized residual vs fitted*/*Residuals vs leverage*: Outliers/influential points are labelled/in second plot, we want all points near 0
+-   checking for outliers *Standardized residual vs fitted*/*Residuals
+    vs leverage*: Outliers/influential points are labelled/in second
+    plot, we want all points near 0
 
 ```{r, echo=FALSE}
 plot(res.lm)
 ```
+
 ```{r, echo=FALSE}
 Name <- row.names(marketing)
 plot(cooks.distance(res.lm)) 
 #text(order(cooks.distance(res.lm)[0:4]), row.names(Name[0:4]), cex=0.6, pos=4)
 ```
 
-
 ### Handle outliers
-- Delete them: be careful, can be sometimes the right thing to do
-- Change the model: outliers break a pattern, they may represent a class we're not fitting, might want to change our model to account for two or multiple behaviours/populations
-- Robust linear regression: downsize the influence of outliers
 
+-   Delete them: be careful, can be sometimes the right thing to do
+-   Change the model: outliers break a pattern, they may represent a
+    class we're not fitting, might want to change our model to account
+    for two or multiple behaviours/populations
+-   Robust linear regression: downsize the influence of outliers
 
 ## Partial correlation
+
 ### Two variable regression
-Back to $Y=\beta X+\gamma Z+\varepsilon$, suppose $X, Z$ our two variables. 
-Least square estimate 
-$$
+
+Back to $Y=\beta X+\gamma Z+\varepsilon$, suppose $X, Z$ our two
+variables. Least square estimate $$
 \begin{pmatrix}\hat{\beta}\\\hat{\gamma}\end{pmatrix}=\begin{pmatrix}X^T X & X^T Z\\Z^T X & Z^T Z\end{pmatrix}^{- 1}\begin{pmatrix}X^T Y\\X^T Y\end{pmatrix}
 $$
 
-Use block matrix inversion, note that $Z(Z^T Z)^{- 1}Z^T$ is a "hat matrix" for regression $X$ over $Z$ in the top first of diagonal matrix, and the RSS in the bottom last. 
+Use block matrix inversion, note that $Z(Z^T Z)^{- 1}Z^T$ is a "hat
+matrix" for regression $X$ over $Z$ in the top first of diagonal matrix,
+and the RSS in the bottom last.
 
 $$
 \begin{pmatrix}X^T X & X^T Z\\Z^T X & Z^T Z\end{pmatrix}^{- 1}=\begin{pmatrix}(X^T X) &\\&\end{pmatrix}\times\begin{pmatrix} &\\ &\end{pmatrix}
 $$
 
 ### Two- stage linear regression
-We find the exact same result as previously. 
-This is a very useful trick. Can be extended to multivariate case. 
+
+We find the exact same result as previously. This is a very useful
+trick. Can be extended to multivariate case.
 
 ### Partial correlation and pairwise correlation
-See : https://en.wikipedia.org/wiki/Partial_correlation 
-Do the computation using slides
 
-If conditional mean is not linear, the conditional correlation is different from partial correlation. 
+See : <https://en.wikipedia.org/wiki/Partial_correlation> Do the
+computation using slides
 
-### Geometric interpretation 
-We project $Y$ to the $Z$ direction, and the residuals are obtained as what left in $r_y$ and similarly for $X$. The partial correlation is the angle obtained between those two residuals. 
+If conditional mean is not linear, the conditional correlation is
+different from partial correlation.
 
-In practice, the simplest is to do a two- stage linear regression and get the correlation. 
-Another way is to run linear regression of $Y$ on $(X,Z)$, however this is not gonna be enough, still need to run $X$ on $Z$ because the coefficient of  $Y$ on $(X,Z)$ is gonna be the partial correlation $\times$ a function of the coef of  $X$ on $Z$ (compute it by hand to see). 
+### Geometric interpretation
 
+We project $Y$ to the $Z$ direction, and the residuals are obtained as
+what left in $r_y$ and similarly for $X$. The partial correlation is the
+angle obtained between those two residuals.
 
+In practice, the simplest is to do a two- stage linear regression and
+get the correlation. Another way is to run linear regression of $Y$ on
+$(X,Z)$, however this is not gonna be enough, still need to run $X$ on
+$Z$ because the coefficient of $Y$ on $(X,Z)$ is gonna be the partial
+correlation $\times$ a function of the coef of $X$ on $Z$ (compute it by
+hand to see).
 
+#Lecture 8 Disclaimer: Exam will be in two parts.
 
-#Lecture 8
-Disclaimer: Exam will be in two parts. 
+*Recap* - Leverage
 
-*Recap*
-- Leverage
+-   Standardized residual
 
-- Standardized residual
+-   Cook's distance
 
-- Cook's distance
+-   Partial correlation
 
-- Partial correlation
+## Omitted Variable Bias
 
-## Omitted Variable Bias 
-We are asking ourselves what influence has missing a variable $Z$ in our model. Suppose tue true model $Y=\rho^T X+\gamma^T Z+\varepsilon$ but we fit $Y=X\beta+\varepsilno$. 
+We are asking ourselves what influence has missing a variable $Z$ in our
+model. Suppose tue true model $Y=\rho^T X+\gamma^T Z+\varepsilon$ but we
+fit $Y=X\beta+\varepsilno$.
 
-Recall : 
+Recall :
 
 $$\beta=\frac{Cov(X,Y)}{Var(X)}=\frac{Cov(X,\rho^T X+\gamma^T Z)}{Var(X)}\\
 =\rho^T+\underbrace_{\text{ommitted variable bias}{\gamma^T\frac{Cov(X,Z)}{Var(X)}}
 $$
-
-
 
 ## Toy example: Palmer station penguin data
 
@@ -671,22 +917,31 @@ lin_reg <- lm(bill_depth_mm ~bill_length_mm, data=penguins)
 summary(lin_reg)
 ```
 
-This looks "fine" in numbers... What is the issue here ? We're confronted to a *Simpson paradox*. 
+This looks "fine" in numbers... What is the issue here ? We're
+confronted to a *Simpson paradox*.
 
-What about our diagnostics ? The residuals vs fitted are slightly worrying, the fit is not perfect but nonetheless the linear relationship seems to be reasonable. 
+What about our diagnostics ? The residuals vs fitted are slightly
+worrying, the fit is not perfect but nonetheless the linear relationship
+seems to be reasonable.
+
 ```{r, echo=FALSE}
 plot(penguins$bill_length_mm, penguins$bill_depth_mm, pch=19, main="Regression of bill length on bill depth of penguins")
 abline(coef(lin_reg))
 plot(lin_reg)
 ```
 
-How do we interpret this result ? The longer the beak, the shallower it is. This sounds silly. We can sense the problem of our regression on the residual vs fitted plot. There are two stacks of point around the $x$s, we can see two or more "clumps"... What is missing is the variable of species ! 
+How do we interpret this result ? The longer the beak, the shallower it
+is. This sounds silly. We can sense the problem of our regression on the
+residual vs fitted plot. There are two stacks of point around the $x$s,
+we can see two or more "clumps"... What is missing is the variable of
+species !
 
 ```{r, echo=FALSE}
 lin_1 <- lm(bill_depth_mm ~bill_length_mm: species, data=penguins)
 summary(lin_1)
 plot(lin_1)
 ```
+
 ```{r, echo=FALSE}
 plot(penguins$bill_length_mm, penguins$bill_depth_mm, col=penguins$species, pch=19, main="Regression of bill length on bill depth of penguins")
 a=8.5628281
@@ -700,54 +955,87 @@ abline(a=c(a,a,a), b=c(Adelie, Chinstrap, Gentoo), col=c('black', 'lightpink','g
 ggplot(penguins,aes(bill_length_mm, bill_depth_mm, colour=penguins$species))+geom_point()+geom_smooth(method="lm", se=FALSE)
 ```
 
-For each species, the correlation of those two variables is positive, but for the clumped model, it is negative (which is not really interpretable)!
-
+For each species, the correlation of those two variables is positive,
+but for the clumped model, it is negative (which is not really
+interpretable)!
 
 ## Bootstrap
+
 ### Jacknife estimate
-Robust inference under resampling ? 
 
-If we look at $\bar{X}$ from $X_1,\dots, X_n$, we need to make assumption about the distribution 
-Now, we replicate this but leaving one out to have not only one estimate but a population of estimate: $\bar{X}_{(- i)}=\frac{1}{n- 1}\sum_{j\neq i}X_i$. We don't need an assumption on the distribution of those objects now, we now have $n$ of these objects and we can take as estimate $\bar{\bar{X}}=\frac{1}{n}\sum\bar{X}_{(- i)}$. 
+Robust inference under resampling ?
 
-Variance? Note that all $\bar{X}_{(- i)}$ are highly correlated, taking $\frac{1}{n- 1}\sum (\bar{X}_{(- i)}- \bar{\bar{X}})^2$ won't yield the right amount. Instead, take $\frac{n}{n- 1}(\bar{X}_{(- i)}- \bar{\bar{X}})^2=\frac{1}{n(n- 1)}\sum (X_i- \bar{X})^2$. 
+If we look at $\bar{X}$ from $X_1,\dots, X_n$, we need to make
+assumption about the distribution Now, we replicate this but leaving one
+out to have not only one estimate but a population of estimate:
+$\bar{X}_{(- i)}=\frac{1}{n- 1}\sum_{j\neq i}X_i$. We don't need an
+assumption on the distribution of those objects now, we now have $n$ of
+these objects and we can take as estimate
+$\bar{\bar{X}}=\frac{1}{n}\sum\bar{X}_{(- i)}$.
 
-Now let's take the model $Y=X^T\beta+\epsilon$ with $(X_i, Y_i)_{i=1,\dots, n}$. We compute likewise $\hat{\beta}_{(- i)}$ by regression $Y$ on $X_{(- i)}$. Computations yield $\hat{\beta}_{(- i)}=(X_{(- i)}^TX_{(- i)})^{- 1}X_{(- i)}^T Y_{(- i)}$.
-A simple way to retrieve this result with intuition is using the "leave- one- out" lemma.that gives $\hat{\beta}_{(- i)}=(X^T X)^{- 1}X^T\hat{y}_{(- i)}$
+Variance? Note that all $\bar{X}_{(- i)}$ are highly correlated, taking
+$\frac{1}{n- 1}\sum (\bar{X}_{(- i)}- \bar{\bar{X}})^2$ won't yield the
+right amount. Instead, take
+$\frac{n}{n- 1}(\bar{X}_{(- i)}- \bar{\bar{X}})^2=\frac{1}{n(n- 1)}\sum (X_i- \bar{X})^2$.
 
+Now let's take the model $Y=X^T\beta+\epsilon$ with
+$(X_i, Y_i)_{i=1,\dots, n}$. We compute likewise $\hat{\beta}_{(- i)}$
+by regression $Y$ on $X_{(- i)}$. Computations yield
+$\hat{\beta}_{(- i)}=(X_{(- i)}^TX_{(- i)})^{- 1}X_{(- i)}^T Y_{(- i)}$.
+A simple way to retrieve this result with intuition is using the "leave-
+one- out" lemma.that gives
+$\hat{\beta}_{(- i)}=(X^T X)^{- 1}X^T\hat{y}_{(- i)}$
 
-Variance? In the specific case where we already have $\hat{\beta}$ to plug in our leave- one- out, $$\sum_{i=1}^n (\hat{\beta}_{(- i)}- \hat{\beta})(\hat{\beta}_{(- i)}- \hat{\beta})^T 
+Variance? In the specific case where we already have $\hat{\beta}$ to
+plug in our leave- one- out,
+$$\sum_{i=1}^n (\hat{\beta}_{(- i)}- \hat{\beta})(\hat{\beta}_{(- i)}- \hat{\beta})^T 
 =(X^TX)^{- 1}X^T(\sum (\hat{y}_{(- j)}- (\frac{n- 1}{n}y+\frac{1}{n}X^T\hat{\beta})(\hat{y}_{(- j)}- (\frac{n- 1}{n}y+\frac{1}{n}X^T\hat{\beta})^T))\\
 =(X^T X)X^T D(r_i^2) X(X^T X)^{- 1}$$
 
-Downsize: need either a number of regressions... if not in this specific case (in which we can use our closed form formula). 
-Plus: resample eases inference.
+Downsize: need either a number of regressions... if not in this specific
+case (in which we can use our closed form formula). Plus: resample eases
+inference.
 
 ### Confidence interval
-Point estimate might not be changed by lack of assumptions. However, you need the assumptions for confidence interval. 
 
+Point estimate might not be changed by lack of assumptions. However, you
+need the assumptions for confidence interval.
 
 ### Case resampling
-default method of resampling. 
+
+default method of resampling.
+
 ```{r, echo=FALSE}
 fit <- lm(sales ~., data=marketing)
 library(car)
 boot.model <- Boot(fit, method='case', R=10000)
 hist(boot.model, layout=c(2,2))
 ```
-Important to know how to interpret this. Even bootstrap CI aren't necessarily precise. However, can check if our previous CI is satisfactory by comparing with the bootstrap. 
 
-Question? the QQ- plot indicates normality not held. However the resampling yields a beta estimate that is normal. One possible explanation is CLT (large dataset). 
+Important to know how to interpret this. Even bootstrap CI aren't
+necessarily precise. However, can check if our previous CI is
+satisfactory by comparing with the bootstrap.
 
+Question? the QQ- plot indicates normality not held. However the
+resampling yields a beta estimate that is normal. One possible
+explanation is CLT (large dataset).
 
 ### Residual resampling (parametric boostrap)
-Suppose I fit a lm, i'm assuming the truth is a lm, and normality etc. We can turn things around: i can generate data from my fitted data: $\tilde{Y}=X^T\hat{\beta}+\hat{\epsilon}$. We have two caveats, choice for $X$ and for $\hat{\epsilon}$. For $X$ we keep the design matrix. We choose to resample $\hat{\epsilon}$ along the residuals, yielding $\tilde{\epsilon}$
+
+Suppose I fit a lm, i'm assuming the truth is a lm, and normality etc.
+We can turn things around: i can generate data from my fitted data:
+$\tilde{Y}=X^T\hat{\beta}+\hat{\epsilon}$. We have two caveats, choice
+for $X$ and for $\hat{\epsilon}$. For $X$ we keep the design matrix. We
+choose to resample $\hat{\epsilon}$ along the residuals, yielding
+$\tilde{\epsilon}$
+
 ```{r, echo=FALSE}
 boot.model2 <- Boot(fit, method="residual", R=1000)
 hist(boot.model2, layout=c(2,2))
 ```
 
-### Bootstrap with other stats 
+### Bootstrap with other stats
+
 ```{r, echo=FALSE}
 library(boot)
 library(dplyr)
@@ -761,7 +1049,7 @@ my.stat <- function(sample.data, indices){
   return(output)
 }
 
-boot.nodel <- boot(my.data, my.stat, R=1000)
+boot.model <- boot(my.data, my.stat, R=1000)
 boot.model <- boot(my.data, my.stat, R=1000) 
 ```
 
@@ -769,29 +1057,35 @@ boot.model <- boot(my.data, my.stat, R=1000)
 hist(boot.model, layout=c(1,2))
 ```
 
-
-
-
-
-
 # Lecture 9
+
 Recap on Bootstrap:
 
-- bootstrap: sample new $(X,Y)$ from original sample
+-   bootstrap: sample new $(X,Y)$ from original sample
 
-- residual bootstrap: $X$ is fixed, what is a sample? How do we sample the joint $(X,Y)$ then? Makes no sense to sample our $X$s, the random part is in the residuals, so we need to sample through the residuals. We run a regression and from the residuals we can sample from them new independent residuals. 
+-   residual bootstrap: $X$ is fixed, what is a sample? How do we sample
+    the joint $(X,Y)$ then? Makes no sense to sample our $X$s, the
+    random part is in the residuals, so we need to sample through the
+    residuals. We run a regression and from the residuals we can sample
+    from them new independent residuals.
+
 ```{r}
 library(boot)
 library(datarium)
 ```
 
-When does bootstrap work? This is a tricky question, see theoretical stats course. In general if the problem is small scaled, it works (large asymptotics assumptions hold).
+When does bootstrap work? This is a tricky question, see theoretical
+stats course. In general if the problem is small scaled, it works (large
+asymptotics assumptions hold).
 
-## Variable selection 
-Challenge of not having enough covariates --> Simpson's paradox etc. 
-Challenge of having too many covariates --> too many coeff to estimates so not ideal for predictions. 
+## Variable selection
 
-### PGA data 
+Challenge of not having enough covariates --\> Simpson's paradox etc.
+Challenge of having too many covariates --\> too many coeff to estimates
+so not ideal for predictions.
+
+### PGA data
+
 25 obs. 5 covar. response: score
 
 ```{r}
@@ -799,34 +1093,45 @@ library(Rlab)
 pga = data(golf, package='Rlab')
 lm(score ~ ., data = golf)
 ```
-See that 'sand' is not a significant variable, want to drop it.
-Re-run regression, coefficients changed. How to assess better model? Bias-variance tradeoff, including too many variables increases the variance and drags down the significance of the variables.
+
+See that 'sand' is not a significant variable, want to drop it. Re-run
+regression, coefficients changed. How to assess better model?
+Bias-variance tradeoff, including too many variables increases the
+variance and drags down the significance of the variables.
+
 ```{r}
 #lm(score ~ drive+fair+green+putt, data = pga)
 ```
 
- **Available techniques**
+**Available techniques**
 
-- Classical approaches:
-  - test based
-  - information criteria
-- Bayesian approaches:  
-  - through posterior probability
-  - stochastic search
-  - empirical bayes
-- Regularization approaches
-  - non negative garrote, LASSO
-  - Elastic net, Scad...
-
-
+-   Classical approaches:
+    -   test based
+    -   information criteria
+-   Bayesian approaches:
+    -   through posterior probability
+    -   stochastic search
+    -   empirical bayes
+-   Regularization approaches
+    -   non negative garrote, LASSO
+    -   Elastic net, Scad...
 
 ### Hypothesis testing based approaches
-In cases of nested models $\mathcal{M}_1 \subset \mathcal{M}_2 \subset ... \subset \mathcal{M}_n  $ like in variable selection where subsequent models are strictly smaller and included in the full/previous model, can write sequence of hypothesis $H_{j0}: \mathcal{M}_j \text{  is true }$ vs $H_{ja}: \mathcal{M}_{j+1} \text{ is true }$
 
-For two models, just run a F-test and if null hypothesis is rejected take the bigger model. 
+In cases of nested models \$\mathcal{M}\_1 \subset \mathcal{M}\_2
+\subset ... \subset \mathcal{M}\_n \$ like in variable selection where
+subsequent models are strictly smaller and included in the full/previous
+model, can write sequence of hypothesis
+$H_{j0}: \mathcal{M}_j \text{  is true }$ vs
+$H_{ja}: \mathcal{M}_{j+1} \text{ is true }$
 
-For more than two models, tricker, run tests sequentially, two approaches.
+For two models, just run a F-test and if null hypothesis is rejected
+take the bigger model.
 
+For more than two models, tricker, run tests sequentially, two
+approaches.
+
+```{=tex}
 \begin{eqnarray*}  
 H_{p0}: Z(t) \sim Z(t-1) + & \cdots & + Z(t-(p-1)) \\
 H-{pa}:Z(t) \sim Z(t-1) + & \cdots & + Z(t-p) \\
@@ -834,63 +1139,97 @@ H-{pa}:Z(t) \sim Z(t-1) + & \cdots & + Z(t-p) \\
 H_{j0}: Z(t) \sim Z(t-1) + & \cdots & + Z(t-(j-1)) \\
 H-{ja}:Z(t) \sim Z(t-1) + & \cdots & + Z(t-j) \\
 \end{eqnarray*}
-
-
-
+```
 #### Forward selection
-Run test from first to last, if $\mathcal{M}_1$ isnt rejected, choose, else, move on to the next and test... 
-we are gradually adding complexity to the model
+
+Run test from first to last, if $\mathcal{M}_1$ isnt rejected, choose,
+else, move on to the next and test... we are gradually adding complexity
+to the model
 
 #### Backward elimination
-Start with largest possible model $\mathcal{M}_n$, compared to the simpler $\mathcal{M}_{n-1}$ if we don't have evidence against one of the variable, take it out and choose the $\mathcal{M}_{n-1}$
 
-Both methods don't necessarily result in the same selection. How do we choose which method to choose?
-If you have a large dataset, backwards selection is preferrable. Including a lot of variables is including more noise, and eliminating some variables is likely to be eliminating the estimation of noise.  
+Start with largest possible model $\mathcal{M}_n$, compared to the
+simpler $\mathcal{M}_{n-1}$ if we don't have evidence against one of the
+variable, take it out and choose the $\mathcal{M}_{n-1}$
 
-####  Stepwise regression
-Stepwise regression is a procedure that goes both direction. However it still depends on whether we start with the full model or the null model. Depending on how we search through a discrete space, we are going to end up in a different spot. There is no guarantee of reaching the global optimal. 
+Both methods don't necessarily result in the same selection. How do we
+choose which method to choose? If you have a large dataset, backwards
+selection is preferrable. Including a lot of variables is including more
+noise, and eliminating some variables is likely to be eliminating the
+estimation of noise.
 
+#### Stepwise regression
 
-What about multiple comparison? Looking at each pvalues, we are setting a rigid backdrop for each hypothesis test, looking accross the hypothesis tests is a tricky question. 
+Stepwise regression is a procedure that goes both direction. However it
+still depends on whether we start with the full model or the null model.
+Depending on how we search through a discrete space, we are going to end
+up in a different spot. There is no guarantee of reaching the global
+optimal.
 
-See slides, with backward selection, get 4 variables, with forward selection get 2. 
+What about multiple comparison? Looking at each pvalues, we are setting
+a rigid backdrop for each hypothesis test, looking accross the
+hypothesis tests is a tricky question.
 
-#### Best subset 
-Across all models, models are not nested anymore, hyothesis testing is not possible. How do we choose the best model now? Evaluate which model fits the data best. $R^2$ ? But here, the largest model is always come out best because we can always explain more variation with more variables. We turn to an adjusted $R^2$. 
+See slides, with backward selection, get 4 variables, with forward
+selection get 2.
 
-Issue in $R^2 = \frac{SSE}{SST}$ through $SSE$, then adjust through the DF (caution, formula where intercept included) $adj. R^2 = 1- \frac{SSE/(n-|\mathcal{M}|)}{SST/(n-p)}$.
+#### Best subset
 
-However, adjusted $R^2$ rarely work and has difficult interpretation, what is a better criteria? 
+Across all models, models are not nested anymore, hyothesis testing is
+not possible. How do we choose the best model now? Evaluate which model
+fits the data best. $R^2$ ? But here, the largest model is always come
+out best because we can always explain more variation with more
+variables. We turn to an adjusted $R^2$.
 
-# Lecture 10 
-Recap on variable selection. 
+Issue in $R^2 = \frac{SSE}{SST}$ through $SSE$, then adjust through the
+DF (caution, formula where intercept included)
+$adj. R^2 = 1- \frac{SSE/(n-|\mathcal{M}|)}{SST/(n-p)}$.
 
-- enhanced interpretability
+However, adjusted $R^2$ rarely work and has difficult interpretation,
+what is a better criteria?
 
-- bias-variance tradeoff: not viewing LM as true model, so always have bias, we can always collected more and more variables. You could argue with all variables, we have better prediction, however variance grows because the noise adds up as well for each added variables.
+# Lecture 10
 
-- Hypothesis-based approach
-  - forward
-  
-  - backward
-  
-  - stepwise regression 
-  
-## Variable selection 
+Recap on variable selection.
+
+-   enhanced interpretability
+
+-   bias-variance tradeoff: not viewing LM as true model, so always have
+    bias, we can always collected more and more variables. You could
+    argue with all variables, we have better prediction, however
+    variance grows because the noise adds up as well for each added
+    variables.
+
+-   Hypothesis-based approach
+
+    -   forward
+
+    -   backward
+
+    -   stepwise regression
+
+## Variable selection
 
 ### Hypothesis testing based approaches
-#### Best subset 
-We want to assign a criterion assessing the goodness of a model to select the best model. 
 
-- Identify models space of models $\mathcal{M}$ with all subsets
-- Assign the criteria $\mathcal{C}(M), \forall M \in \mathcal{M}$
-- Select the model that optimises the criteria 
+#### Best subset
 
-How do we come up with a criteria? How do we optimise over $\mathcal{M}$?
-Want to balance between underfitting and overfitting, but what is the point of fitting? We want to predict on new data not just reproduce our current data. Looking at the RSS, we only look at  how well the model fits the data but doesn't tells us how well it would predict future data.  
+We want to assign a criterion assessing the goodness of a model to
+select the best model.
+
+-   Identify models space of models $\mathcal{M}$ with all subsets
+-   Assign the criteria $\mathcal{C}(M), \forall M \in \mathcal{M}$
+-   Select the model that optimises the criteria
+
+How do we come up with a criteria? How do we optimise over
+$\mathcal{M}$? Want to balance between underfitting and overfitting, but
+what is the point of fitting? We want to predict on new data not just
+reproduce our current data. Looking at the RSS, we only look at how well
+the model fits the data but doesn't tells us how well it would predict
+future data.
 
 Here an example: $$ M_0 : Y = 3X_1 + \varepsilon \\
-LM : Y \sim X_1 + X_2 + \cdots + X_j $$ 
+LM : Y \sim X_1 + X_2 + \cdots + X_j $$
 
 ```{r}
 rsq <- NULL
@@ -904,105 +1243,157 @@ for (i in 1:(n-1)) {
   rsq <- rbind(rsq, c(summary(fit.x$coef),summary(fit.x$rsquared) ))
  }
 ```
-See that including more variables, more degrees of freedom. Adj. $R^2$ let's pick a simpler model, but still doesn't work completely, as we see that by the end, the Adj. $R^2$ jumps up again. This is because the SSE tends to one when overfitting. It only adjusts for model complexity.
+
+See that including more variables, more degrees of freedom. Adj. $R^2$
+let's pick a simpler model, but still doesn't work completely, as we see
+that by the end, the Adj. $R^2$ jumps up again. This is because the SSE
+tends to one when overfitting. It only adjusts for model complexity.
 
 #### Prediction based criteria
 
-What is a good prediction? Good prediction and fit are not necessary achieved the same way. We fit a certain dataset on the assumption that it is representative of what we want to study. If it is representative, if we have a new observation $x_{new}$, shall predict $\hat{y}_{new} = \hat{x}_{new}^T \hat{\beta}$. If it is uniformly sampled from our data (as in Bootstrap sort of idea), we see RSS is indeed the way to measure our performance. See that this works only when $y_{new} \perp \hat{y}_{new}| x_{new}$. 
+What is a good prediction? Good prediction and fit are not necessary
+achieved the same way. We fit a certain dataset on the assumption that
+it is representative of what we want to study. If it is representative,
+if we have a new observation $x_{new}$, shall predict
+$\hat{y}_{new} = \hat{x}_{new}^T \hat{\beta}$. If it is uniformly
+sampled from our data (as in Bootstrap sort of idea), we see RSS is
+indeed the way to measure our performance. See that this works only when
+$y_{new} \perp \hat{y}_{new}| x_{new}$.
 
 In particularm we are overoptism in training error:
 $$ E(RSS) = E(\frac{1}{n} \sum_i (\hat{y}_{i})- y_i)^2) = \sigma^2 +\frac{1}{n} \sum_i E(\hat{y}_{i})- \mu(x_i))^2) + \color{red}{E(\frac{2}{n} \sum_i (\hat{y}_{i})- \mu(x_i))(\mu(x_i)- y_i))} $$
 
-Note that with calculation recognising the hat matrix and assuming the errors are uncorrelated (see slides): $\color{red}{E(\frac{2}{n} \sum_i (\hat{y}_{i})- \mu(x_i)(\mu(x_i)- y_i))} = \frac{2\sigma^2 |\mathcal{M}|}{n} > 0$ 
-This also gives us a way to correct our RSS! Substracting for this overoptism, we get the Mallow's $C_p(\mathcal{M}) = RSS_{\mathcal{M}} + 2 \hat{\sigma}^2 |\mathcal{M}|$ where $\hat{\sigma}^2= RSS_{full}/(n-p)$ with the RSS of full model. This justifies that we privilege backwards elimination for large datasets since our estimate of $\hat{\sigma}^2$ is better. 
-
+Note that with calculation recognising the hat matrix and assuming the
+errors are uncorrelated (see slides):
+$\color{red}{E(\frac{2}{n} \sum_i (\hat{y}_{i})- \mu(x_i)(\mu(x_i)- y_i))} = \frac{2\sigma^2 |\mathcal{M}|}{n} > 0$
+This also gives us a way to correct our RSS! Substracting for this
+overoptism, we get the Mallow's
+$C_p(\mathcal{M}) = RSS_{\mathcal{M}} + 2 \hat{\sigma}^2 |\mathcal{M}|$
+where $\hat{\sigma}^2= RSS_{full}/(n-p)$ with the RSS of full model.
+This justifies that we privilege backwards elimination for large
+datasets since our estimate of $\hat{\sigma}^2$ is better.
 
 ### Information criteria
-These are not derived using a prediction based method but do combine the same ideas: a term minimising RSS, a term minimising the complexity of the models. 
 
+These are not derived using a prediction based method but do combine the
+same ideas: a term minimising RSS, a term minimising the complexity of
+the models.
 
 # Lecture 11
 
 Recap on variable selection.
 
-- hypothesis based F-statistics: easy to implement, interpret but results can be very off
+-   hypothesis based F-statistics: easy to implement, interpret but
+    results can be very off
 
-- Best subset on space of all models with criterion measuring quality of each model
-  - Mallow's $C_p$: unbiased risk estimate
-  - Information based criteria
-  
-  
+-   Best subset on space of all models with criterion measuring quality
+    of each model
+
+    -   Mallow's $C_p$: unbiased risk estimate
+    -   Information based criteria
+
 ## Variable selectoin
+
 ### Information based criteria
 
 $IC(\mathcal{M}) = n \log(S_\mathcal{M}/n)+\lambda \sigma^2|\mathcal{M}$
 
-
-
-
-
-
-
-
-
-
 # Lecture 12: Variable selection IV
-Recap: 
 
-- Two step procedure: choose model over some criterion, use LS with choosen model,
-- Three ideas: Unbiased risk estimate with Mallow's, CV and GCV
-- Challenge: NP-hard, unstable, greedy stepwise implementation
+Recap:
 
+-   Two step procedure: choose model over some criterion, use LS with
+    choosen model,
+-   Three ideas: Unbiased risk estimate with Mallow's, CV and GCV
+-   Challenge: NP-hard, unstable, greedy stepwise implementation
 
-Unstability: Neil Breiman shows when removing one data point, could lead to big changes in the model, variable selection gains interpretability but little changes in the data has big impact in the model. How can we have faith in the selected model? 
-On the one-hand, model selection is usefulm if the signal is strong ie one model stands out, most criteria will agree with each other and select this one. In this case, we can feel secure to do analysis and inference. On the other hand, we need to be extra careful with interpretating our estimates. 
+Unstability: Neil Breiman shows when removing one data point, could lead
+to big changes in the model, variable selection gains interpretability
+but little changes in the data has big impact in the model. How can we
+have faith in the selected model? On the one-hand, model selection is
+usefulm if the signal is strong ie one model stands out, most criteria
+will agree with each other and select this one. In this case, we can
+feel secure to do analysis and inference. On the other hand, we need to
+be extra careful with interpretating our estimates.
 
-Computational infeasibility happens if too many variables, can use quicker searches but nor the branch and bound nor stepwise search can't fully replace exhaustive search, will find a sort of local optimum.
+Computational infeasibility happens if too many variables, can use
+quicker searches but nor the branch and bound nor stepwise search can't
+fully replace exhaustive search, will find a sort of local optimum.
 
 ## Variable selection IV
 
 ### Bayesian Model selection
+
 #### Framework
 
-Framework of hierarchical Bayes for variable selection: 
+Framework of hierarchical Bayes for variable selection:
 
-- prior $P$ 
-- 
-- a data generating mechanism $P(data|\mathcal{M}, \beta_{\mathcal{M}})
+-   prior $P$
+-   
+-   a data generating mechanism \$P(data\|\mathcal{M},
+    \beta\_{\mathcal{M}})
 
+Suppose $X \sim N(\mu, 1)$, and $\mu ~ N(0, \sigma^2)$ then we can
+compute the posterior distribution $\mu|X$ (will follow a normal here).
 
+Now assume multivariate $Y=X^T \beta + \varepsilon$ with
+$Y_i sim N(X_i^T\beta, \sigma_0^2)$. We want to assume a similar prior
+as before $\beta \sim N(0, \sigma^2 I_p)$. Assuming to have the same
+$\sigma^2$ to control our belief is very hard, think of how this
+pictures: we are setting a very small box of variation around our
+covariates which have small probability mass as we go in higher
+dimensions. If more covariates, can move into a multivariate Gaussian,
+however, how do we specify the variance of our prior in this case to
+make the models comparable?
 
-Suppose $X \sim N(\mu, 1)$, and $\mu ~ N(0, \sigma^2)$ then we can compute the posterior distribution $\mu|X$ (will follow a normal here).
+#### Stochastic search variable selection
 
-Now assume multivariate $Y=X^T \beta + \varepsilon$ with $Y_i sim N(X_i^T\beta, \sigma_0^2)$. We want to assume a similar prior as before $\beta \sim N(0, \sigma^2 I_p)$. Assuming to have the same $\sigma^2$ to control our belief is very hard, think of how this pictures: we are setting a very small box of variation around our covariates which have small probability mass as we go in higher dimensions.
-If more covariates, can move into a multivariate Gaussian, however, how do we specify the variance of our prior in this case to make the models comparable?
+Framework:
 
-#### Stochastic search variable selection 
-Framework: 
-
+```{=tex}
 \begin{eqnarray}
 & & y_i | x_i, \beta, \sigma^2 \sim N(x_i^T \beta, \sigma^2) \\
 & & \beta|\gamma \sim N(0, DRD)\\
 & & \gamma \sim Ber(w_j) \\ 
 & & \sigma^2 | \gamma \sim IG(\nu/2, \nu \lambda/2)
 \end{eqnarray}
-
+```
 Reference: George and McCullogh
 
-Idea as follows: include all the variables, model selection means we want to drop the estimates close to 0. In here, we avoid calculations of different dimensions $\beta$. This method gives you an estimate while variable selction. We give a prior $\beta|\gamma \sim N(0, D_\gamma R D_\gamma)$ where $\gamma$ has use to specify whether the particular coefficient is or not in the model. If it is in the model, $\gamma_j = 0$, we give a prior for the corresponding coefficient set to $a_j = 1$ while if it is not ie $\gamma_j = 1$ we want to set $\beta_j =0$ but we can't since it will give us the same issue of dimensionality as before. What we do is we put a very tight normal as prior for $\beta_j \sim w_j N(0,c_j \sigma^2)$ where $c_j$ almost 0. This yields that $\beta_j \sim w_j N(0,c_j \sigma^2)+ (1-w_j)N(0, \sigma^2)$. Basically, \beta has a mixture model distribution.
-
+Idea as follows: include all the variables, model selection means we
+want to drop the estimates close to 0. In here, we avoid calculations of
+different dimensions $\beta$. This method gives you an estimate while
+variable selction. We give a prior
+$\beta|\gamma \sim N(0, D_\gamma R D_\gamma)$ where $\gamma$ has use to
+specify whether the particular coefficient is or not in the model. If it
+is in the model, $\gamma_j = 0$, we give a prior for the corresponding
+coefficient set to $a_j = 1$ while if it is not ie $\gamma_j = 1$ we
+want to set $\beta_j =0$ but we can't since it will give us the same
+issue of dimensionality as before. What we do is we put a very tight
+normal as prior for $\beta_j \sim w_j N(0,c_j \sigma^2)$ where $c_j$
+almost 0. This yields that
+$\beta_j \sim w_j N(0,c_j \sigma^2)+ (1-w_j)N(0, \sigma^2)$. Basically,
+\beta has a mixture model distribution.
 
 To carry on the calculation, we use stochastic search.
 
-1. The best way to do our calculation is to compute explicitly our posterior probabilities (conjugate priors give us explicit form). 
+1.  The best way to do our calculation is to compute explicitly our
+    posterior probabilities (conjugate priors give us explicit form).
 
-2. This is however not always possible, then we might want to sample our posterior $P(\mathcal{M}|Y,X)$ using Monte Carlo. 
+2.  This is however not always possible, then we might want to sample
+    our posterior $P(\mathcal{M}|Y,X)$ using Monte Carlo.
 
-3. If this isnt possible either, we need exhaustive search. Knowing only prior and likelihood, is it possible to sample from posterior? Ideas behind MCMC, Gibbs Sampling and Metropolis Hastings. 
+3.  If this isnt possible either, we need exhaustive search. Knowing
+    only prior and likelihood, is it possible to sample from posterior?
+    Ideas behind MCMC, Gibbs Sampling and Metropolis Hastings.
 
-Indeed, in our example, we see that we can compute distributions of $\nu|\beta, \sigma^2, data$, $\beta|data, \gamma, \sigma^2$, and $\sigma^2|data, \beta,\nu$. Instead of sampling full posterior, we do a Markov chain of the conditionals. See Markov chains' stationarity properties.
+Indeed, in our example, we see that we can compute distributions of
+$\nu|\beta, \sigma^2, data$, $\beta|data, \gamma, \sigma^2$, and
+$\sigma^2|data, \beta,\nu$. Instead of sampling full posterior, we do a
+Markov chain of the conditionals. See Markov chains' stationarity
+properties.
 
-
+```{=tex}
 \begin{eqnarray}
 & &  \beta^{[0]} \sim \beta|data, \dots \text{ follows a normal}\\
 & & \gamma^{[0]} \sim \gamma| data, \beta^{[0]}\text{ follows a bernoulli} \\
@@ -1010,47 +1401,73 @@ Indeed, in our example, we see that we can compute distributions of $\nu|\beta, 
 & & \beta^{[1]} \sim \beta| data, \gamma^{[0]}, \sigma^{[0]} \\
 & \vdots &
 \end{eqnarray}
-
-
+```
 ### Regularization for variable selection
+
 #### Bridge regression
-Variable selection and model selection are equivalent. See that Mallow's Cp is a special case of the following:
 
-$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda Pen(\beta) $$
-where $Pen$ is some sort of penalization. 
+Variable selection and model selection are equivalent. See that Mallow's
+Cp is a special case of the following:
 
-In case of Mallows Cp we are counting the non-zero entries ie we are looking at the $\ell_0$ norm. This gives intuition to look at Bridge regression for $\ell_p$ norm penalisations for $p \geq 1$. With a quasi norm, we can also defines this for $p \in (0,1)$. 
+$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda Pen(\beta) $$ where $Pen$ is
+some sort of penalization.
 
-$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda ||\beta||_{\ell_p}^p $$
-For $p = 1$, Lasso, can see no longer have smooth volume, the poles are points more likely to be hit by our hyperplane. Note that $p=0$ gives sparse solutions, for $p< 1$ solutions are non convex, for $p \geq 1 $ is convex. 
+In case of Mallows Cp we are counting the non-zero entries ie we are
+looking at the $\ell_0$ norm. This gives intuition to look at Bridge
+regression for $\ell_p$ norm penalisations for $p \geq 1$. With a quasi
+norm, we can also defines this for $p \in (0,1)$.
+
+$$ \frac{1}{n} ||Y-X\beta||^2 + \lambda ||\beta||_{\ell_p}^p $$ For
+$p = 1$, Lasso, can see no longer have smooth volume, the poles are
+points more likely to be hit by our hyperplane. Note that $p=0$ gives
+sparse solutions, for $p< 1$ solutions are non convex, for \$p \geq 1 \$
+is convex.
 
 #### Shrinkage effect
 
-Suppose we do Bridge with one covariate. We want to know what happens when we penalise our coefficient. This is refer to the shrinkage effect. 
+Suppose we do Bridge with one covariate. We want to know what happens
+when we penalise our coefficient. This is refer to the shrinkage effect.
 
+See picture. The horizontal axis is taken as magnitude of LS estimate,
+the vertical being the magnitude of penalised Bridge estimate ie
+$\hat{\beta_\lambda} \propto \hat{\beta}$.
 
-
-See picture. The horizontal axis is taken as magnitude of LS estimate, the vertical being the magnitude of penalised Bridge estimate ie $\hat{\beta_\lambda} \propto \hat{\beta}$. 
-
-For $p > 1$ we are shrinking the estimates that are far from 0 in this case. We have a preference for estimates near 0.
-For $p \leq 1$ we are shrinking the estimates that are close to 0, estimating by 0 when they are small. Note that for $p=1$ there's always a difference between our shrinkage estimate and LS estimate so the estimate is always going to biased! In this respect, $p<1$ is preferrable. However, computationally, we have to deal with non convex optimisation issue! This explains the popularity of choice $p=1$. 
+For $p > 1$ we are shrinking the estimates that are far from 0 in this
+case. We have a preference for estimates near 0. For $p \leq 1$ we are
+shrinking the estimates that are close to 0, estimating by 0 when they
+are small. Note that for $p=1$ there's always a difference between our
+shrinkage estimate and LS estimate so the estimate is always going to
+biased! In this respect, $p<1$ is preferrable. However, computationally,
+we have to deal with non convex optimisation issue! This explains the
+popularity of choice $p=1$.
 
 Most preferred methods:
 
+-   Ridge with $\ell_2$:
+    $\frac{1}{n} ||Y-X\beta||^2 + \lambda_2 ||\beta||_{\ell_2}$
 
-- Ridge with $\ell_2$: $\frac{1}{n} ||Y-X\beta||^2 + \lambda_2 ||\beta||_{\ell_2}$
+-   Lasso with $\ell_1$:
+    $\frac{1}{n} ||Y-X\beta||^2 + \lambda_1 ||\beta||_{\ell_1}$
 
-- Lasso with $\ell_1$: $\frac{1}{n} ||Y-X\beta||^2 + \lambda_1 ||\beta||_{\ell_1}$
+#### Elastic net
 
-
-#### Elastic net 
 $$ \frac{1}{n} ||Y-X\beta||^2 + \lambda_1 ||\beta||_{\ell_1}+ \lambda_2 ||\beta||_{\ell_2}^2 $$
 
-- $\ell_1$ allows sparsity and acts as variable selection 
-- $\ell_2$ stabilises the $\ell_1$ regularization and has grouping property.
+-   $\ell_1$ allows sparsity and acts as variable selection
+-   $\ell_2$ stabilises the $\ell_1$ regularization and has grouping
+    property.
 
-Grouping effect: If two variables are highly correlated, none will be selected as we cant decide which of the two has a causal effect, however it doesnt make sense to select nothing, at least one is relevant. Strategies would be to select one of the two, but with good chance of selecting the wrong one, or both but it is even worse as now our design matrix is no longer well conditioned. This pathological case is recovered using Ridge estimate by putting equal value for both estimates. This is kind of like the first strategy as it is in a way arbitrary but it stabilises the regression for other covariates. This only caveat is identifying the effect of those two variables will be hard. 
-
+Grouping effect: If two variables are highly correlated, none will be
+selected as we cant decide which of the two has a causal effect, however
+it doesnt make sense to select nothing, at least one is relevant.
+Strategies would be to select one of the two, but with good chance of
+selecting the wrong one, or both but it is even worse as now our design
+matrix is no longer well conditioned. This pathological case is
+recovered using Ridge estimate by putting equal value for both
+estimates. This is kind of like the first strategy as it is in a way
+arbitrary but it stabilises the regression for other covariates. This
+only caveat is identifying the effect of those two variables will be
+hard.
 
 ```{r}
 library(glmnet)
@@ -1060,45 +1477,82 @@ plot(fit)
 
 # Lecture 13: Variable selection V
 
-Recap: 
+Recap:
 
-- Bayesian Model selection: spike and slab prior
-- Regularization: allows you to put a prior knowledge of what coefficients you want shrunk 
-
-
+-   Bayesian Model selection: spike and slab prior
+-   Regularization: allows you to put a prior knowledge of what
+    coefficients you want shrunk
 
 #### LASSO
-LASSO interesting as still penalty is convex, however has shrinkage property because of existence of corners on the $\ell_1$ ball (captures sparsity). 
-It is  hard to achieve simultaneously good efficiency of model and model consistency. This is also true for LASSO: but which one is compromised here? All depends on the choice of the tuning parameter $\lambda$. There are also cases in which however you choose your tuning parameter, the model won't be consistent. 
 
-Note, $\hat{\beta}_{ridge} = (X^T X-\lambda I)^{-1}X^T Y$. First order conditions for LASSO $-2X^T Y+ 2X^TX \beta +\lambda sgn(\beta)=0$ where $sgn(\beta) = 1$ if $\beta>0$, $sgn(\beta) = -1$ if $\beta<0$ and $sgn(\beta) = [-1,1]$ if $\beta=0$. Yields for $\hat{\beta}_{LASSO}=(X^TX)^{-1}(X^TY - \frac{1}{2} \lambda sgn(\beta))$. Note if $\lambda > 2|X^T Y|$ in univariate, shrinks to 0. In multivariate, will happen similarly when  $\lambda > 2 \max_{i=1, \dots, p} |X_i^T Y|$. 
+LASSO interesting as still penalty is convex, however has shrinkage
+property because of existence of corners on the $\ell_1$ ball (captures
+sparsity). It is hard to achieve simultaneously good efficiency of model
+and model consistency. This is also true for LASSO: but which one is
+compromised here? All depends on the choice of the tuning parameter
+$\lambda$. There are also cases in which however you choose your tuning
+parameter, the model won't be consistent.
 
-Scaling issue with LASSO: if two different units for two coefficients, will influence our result, $\lambda$ no longer has a unit. We need to rescale all input variable to make sure they are all comparable. This is however more an ad hoc solution, there is no reason to believe that things should have unit sd. 
+Note, $\hat{\beta}_{ridge} = (X^T X-\lambda I)^{-1}X^T Y$. First order
+conditions for LASSO $-2X^T Y+ 2X^TX \beta +\lambda sgn(\beta)=0$ where
+$sgn(\beta) = 1$ if $\beta>0$, $sgn(\beta) = -1$ if $\beta<0$ and
+$sgn(\beta) = [-1,1]$ if $\beta=0$. Yields for
+$\hat{\beta}_{LASSO}=(X^TX)^{-1}(X^TY - \frac{1}{2} \lambda sgn(\beta))$.
+Note if $\lambda > 2|X^T Y|$ in univariate, shrinks to 0. In
+multivariate, will happen similarly when
+$\lambda > 2 \max_{i=1, \dots, p} |X_i^T Y|$.
 
-Useful with LASSO is to have a pathway of solutions. Which estimate should we take? 
+Scaling issue with LASSO: if two different units for two coefficients,
+will influence our result, $\lambda$ no longer has a unit. We need to
+rescale all input variable to make sure they are all comparable. This is
+however more an ad hoc solution, there is no reason to believe that
+things should have unit sd.
+
+Useful with LASSO is to have a pathway of solutions. Which estimate
+should we take?
 
 ### Tuning parameter selection
 
 #### Ridge
-Start with ridge, we have a linear estimate $X \hat{\beta}=H(\lambda) Y$ with $H(\lambda) = X (X^T X-\lambda I)^{-1}X^T$. So we can find the unbiased risk estimate $R(\beta, \hat{\beta}_R) = \frac{\sigma^2}{n}Tr(H(\lambda))$. 
+
+Start with ridge, we have a linear estimate $X \hat{\beta}=H(\lambda) Y$
+with $H(\lambda) = X (X^T X-\lambda I)^{-1}X^T$. So we can find the
+unbiased risk estimate
+$R(\beta, \hat{\beta}_R) = \frac{\sigma^2}{n}Tr(H(\lambda))$.
 
 #### LASSO
-Only interested in values that are not 0-coefficiented. Define therefore the support vector $s = supp(\hat{\beta})= \{ j: \hat{\beta}_j \neq 0 \}$. Note that we don't know $S$ yet. 
-So $\hat{Y} = X\hat{\beta}= X_s \hat{\beta}_s$ and in first order conditions $\hat{\beta}_s=(X^T X)^{-1}(X^TY-\lambda s(\hat{\beta}_s))$.
 
-No longer a linear estimate. But it is still a piecewise linear estimate. However can apply on normal rv using Stein's lemma. Note that when you change a little bit your $Y$ it is not going to change the support set. In this case we find the Stein s unbiased risk estimate equal to $\frac{2\sigma^2}{n} E(|S|)$. However this works on the assumption of gaussian noise, which is likely to not be the case with the data if we want to do LASSO on it (likely to be skewed).
+Only interested in values that are not 0-coefficiented. Define therefore
+the support vector
+$s = supp(\hat{\beta})= \{ j: \hat{\beta}_j \neq 0 \}$. Note that we
+don't know $S$ yet. So $\hat{Y} = X\hat{\beta}= X_s \hat{\beta}_s$ and
+in first order conditions
+$\hat{\beta}_s=(X^T X)^{-1}(X^TY-\lambda s(\hat{\beta}_s))$.
+
+No longer a linear estimate. But it is still a piecewise linear
+estimate. However can apply on normal rv using Stein's lemma. Note that
+when you change a little bit your $Y$ it is not going to change the
+support set. In this case we find the Stein s unbiased risk estimate
+equal to $\frac{2\sigma^2}{n} E(|S|)$. However this works on the
+assumption of gaussian noise, which is likely to not be the case with
+the data if we want to do LASSO on it (likely to be skewed).
 
 Cross-validation on LASSO to find tuning parameter:
+
 ```{r}
 set.seed(123)
 cv.fit <- cv.glmnet(data.matrix(marketing[,-1]),marketing[,1])
 plot(cv.fit)
 ```
 
-
-We want a smaller model, but we want it to not be statistically different to the full model. First line gives you the $\lambda$ given by the CV, the second line gives another $\lambda$ that is not statistically different from the one (less than 1sd away) but reduces the number of variables a lot. 
+We want a smaller model, but we want it to not be statistically
+different to the full model. First line gives you the $\lambda$ given by
+the CV, the second line gives another $\lambda$ that is not
+statistically different from the one (less than 1sd away) but reduces
+the number of variables a lot.
 
 ## Categorical Variables
+
 ```{r}
 library(xtable)
 data(tli)
@@ -1107,22 +1561,37 @@ tli$ethnicty<-as.factor(tli$ethnicty)
 summary(tli)
 ```
 
-There is no meaning of how to compare different grades, we need to interpret it as a categorical variable. We don't want to use grade as an $X$ which is why we turn it into a factor and we now use grade as a label. 
-Now run a linear regression. How do we interpret this? Why is there a star next to grade6?
+There is no meaning of how to compare different grades, we need to
+interpret it as a categorical variable. We don't want to use grade as an
+$X$ which is why we turn it into a factor and we now use grade as a
+label. Now run a linear regression. How do we interpret this? Why is
+there a star next to grade6?
 
 ```{r}
 fit<- lm(tlimth ~ ., data=tli)
 summary(fit)
 ```
-Read that a female black student in grade 3 with no economic disadvantage has an average 64 on test scores. Read grade4 says that if she was in grade 4, would average go up with 4.57 points. However, can we interpret the significance?
-We are using grade3 as baseline, this output shows grade6 is significant which allows us to say all other grades are similar to grade3 but grade6 is significantly from grade3. If you change the baseline, you'll find something similar with other levels involved, can find contradictions. Why? because there's no transitivity in hypothesis testing: 1 being significantly different from 2 and 2 sig. diff. from 3 doesn't imply 1 sig. diff. from 3. Second issue is a how do we interpret the p-value. Have to introduce a correction: Bonferroni correction. 
 
-We encode the grades the following. 
+Read that a female black student in grade 3 with no economic
+disadvantage has an average 64 on test scores. Read grade4 says that if
+she was in grade 4, would average go up with 4.57 points. However, can
+we interpret the significance? We are using grade3 as baseline, this
+output shows grade6 is significant which allows us to say all other
+grades are similar to grade3 but grade6 is significantly from grade3. If
+you change the baseline, you'll find something similar with other levels
+involved, can find contradictions. Why? because there's no transitivity
+in hypothesis testing: 1 being significantly different from 2 and 2 sig.
+diff. from 3 doesn't imply 1 sig. diff. from 3. Second issue is a how do
+we interpret the p-value. Have to introduce a correction: Bonferroni
+correction.
+
+We encode the grades the following.
+
 ```{r}
 contrasts(tli$grade)
 ```
 
-Not the best why to encode information, we could use deviation coding. 
+Not the best why to encode information, we could use deviation coding.
 
 ```{r}
 contrasts(tli$grade)=contr.sum(6) 
@@ -1131,48 +1600,74 @@ fit <- lm(tlimth ~., data=tli)
 summary(fit)
 ```
 
-Estimates changed a lot. What to do? We shouldn't be trying to use the contrasts to decide on significance but anova. 
+Estimates changed a lot. What to do? We shouldn't be trying to use the
+contrasts to decide on significance but anova.
 
 ```{r}
 anova(fit)
 ```
 
-Logistic: take home exam on Courseworks, Wednesday between 10-10:10. Due Friday at noon. Submission either via email to Jialin, more instructions to come. 
-
+Logistic: take home exam on Courseworks, Wednesday between 10-10:10. Due
+Friday at noon. Submission either via email to Jialin, more instructions
+to come.
 
 # Lecture 14: Categorical variables
 
-*Recap* 
+*Recap*
 
-- LASSO: practical aspects of using it as variable selection technique: LASSO solution path is piecewise linear --> figuring out where the change point occurs is key (see least angles method optimisation/stats, ...)
+-   LASSO: practical aspects of using it as variable selection
+    technique: LASSO solution path is piecewise linear --\> figuring out
+    where the change point occurs is key (see least angles method
+    optimisation/stats, ...)
 
-- Tuning parameter selection 
-  - similar to model selection
-  - unbiased risk estimate, GCV, AIC, CV,...
-  
-- Dealing with Categorical Variables
-  - factors
-  - coding factors with contrasts
-  
+-   Tuning parameter selection
+
+    -   similar to model selection
+    -   unbiased risk estimate, GCV, AIC, CV,...
+
+-   Dealing with Categorical Variables
+
+    -   factors
+    -   coding factors with contrasts
+
 ## Categorical variables
 
-### Anova 
-Note that *grade* and *ethnicity* are categoricals. Note for *ethnicity* there is only 4 categories, with OTHERS having only two observations, have to be careful about its interpretation. 
+### Anova
+
+Note that *grade* and *ethnicity* are categoricals. Note for *ethnicity*
+there is only 4 categories, with OTHERS having only two observations,
+have to be careful about its interpretation.
+
 ```{r}
 summary(tli)
 ```
-How do we interpret *grade*? By definition, by introduce dummy variable, there is not much point to explain a dummy variable. Want to look at coefficients collectively. Deviation contrasts is going to enable us to have a proper statistical analysis. Anova table also allows a proper interpretation. 
+
+How do we interpret *grade*? By definition, by introduce dummy variable,
+there is not much point to explain a dummy variable. Want to look at
+coefficients collectively. Deviation contrasts is going to enable us to
+have a proper statistical analysis. Anova table also allows a proper
+interpretation.
 
 ```{r}
 summary(fit)
 anova(fit)
 ```
 
-Anova uses the F-test to test simultaneously the 5 levels of grade (so 5 DF). F-value(Variable) = Mean Sq(Variable) /(Mean Sq(Residuals))
-Weird thing happening, t-stat and f-stat should be the same for sex... Point out https://stats.stackexchange.com/questions/13241/the-order-of-variables-in-anova-matters-doesnt-it 
+Anova uses the F-test to test simultaneously the 5 levels of grade (so 5
+DF). F-value(Variable) = Mean Sq(Variable) /(Mean Sq(Residuals)) Weird
+thing happening, t-stat and f-stat should be the same for sex... Point
+out
+<https://stats.stackexchange.com/questions/13241/the-order-of-variables-in-anova-matters-doesnt-it>
 
 ### Deviation coding
-Last level used as benchmark. In dummy coding, intercept and grade3 are tight together, so harder to interpret. Here in deviation coding, we overcome this caveat by explicitly setting a level as benchmark and comparing a grade to the benchmark (hence +1, -1). However, here the coefficient no longer reads as the effect of one coefficient, the scale is changed. It will always read as effect of grade 4 and 8, 5 and 8 etc, etc. 
+
+Last level used as benchmark. In dummy coding, intercept and grade3 are
+tight together, so harder to interpret. Here in deviation coding, we
+overcome this caveat by explicitly setting a level as benchmark and
+comparing a grade to the benchmark (hence +1, -1). However, here the
+coefficient no longer reads as the effect of one coefficient, the scale
+is changed. It will always read as effect of grade 4 and 8, 5 and 8 etc,
+etc.
 
 ```{r}
 contrasts(tli$grade) = contr.sum(6)
@@ -1185,37 +1680,49 @@ fit<- lm(tlimth ~ ., data=tli)
 summary(fit)
 anova(fit)
 ```
-Note that anova is invariant on coding variables. 
+
+Note that anova is invariant on coding variables.
 
 ### Other coding schemes
 
-When there is some sort of order in the variables, not necessarily linear, can use the polynomial contrasts to capture up to degree $d$ of relations. If 6 variables, have to go up to degree 5 of polynomials. Might be computationally expensive.
+When there is some sort of order in the variables, not necessarily
+linear, can use the polynomial contrasts to capture up to degree $d$ of
+relations. If 6 variables, have to go up to degree 5 of polynomials.
+Might be computationally expensive.
 
 ```{r}
 contr.poly(4)
 ```
 
-Helmert's contrasts is particularly useful for ordinal categorical variables, we are always comparing to all the variables before us. 
+Helmert's contrasts is particularly useful for ordinal categorical
+variables, we are always comparing to all the variables before us.
+
 ```{r}
 contr.helmert(4)
 ```
 
-Depending on the nature of categorical variables, some contrasts might make more sense. Can design your own contrasts. As a collective interpretation, use ANOVA. 
+Depending on the nature of categorical variables, some contrasts might
+make more sense. Can design your own contrasts. As a collective
+interpretation, use ANOVA.
 
-
-Has implications on variable selection. Note that variable coding will influence the variable selection choice. Have to be careful, introduce step function to select factors. See how RSS and AIC changes when removing a variable. 
+Has implications on variable selection. Note that variable coding will
+influence the variable selection choice. Have to be careful, introduce
+step function to select factors. See how RSS and AIC changes when
+removing a variable.
 
 ```{r}
 step(fit)
 ```
 
-From a practical point of view, can run a categorical variable in lm but declare as a factor. When converting as a factor, think of what contrasts to choose. 
- 
+From a practical point of view, can run a categorical variable in lm but
+declare as a factor. When converting as a factor, think of what
+contrasts to choose.
+
 ### Effect of coding
 
-Factor representation $X$ : $Y=X\beta +Z\gamma +\varepsilon$ 
+Factor representation $X$ : $Y=X\beta +Z\gamma +\varepsilon$
 
-Different coding can be seen as a invertible transformation. 
+Different coding can be seen as a invertible transformation.
 
 ### Interactions
 
@@ -1225,20 +1732,248 @@ summary(fit)
 ```
 
 Degrees of freedom just with interactions of grade and ethnicity
+
+```{=tex}
 \begin{align*}
 grade & \rightarrow & 6 DF (k_1) & &  \\
 ethn & \rightarrow & 4 DF (k_2) & &  \\
-& & $\Rightarrow$ & &  total of 23 DF ($k_1 k_2 -1$)  \\ 
-     & & &  $\longrightarrow$  & grade 5 DF ($k_1 -1$) \\
-     & & &  $\longrightarrow$  & ethn 3 DF \\
-     & & &  $\longrightarrow$  & grade:ethn 15 DF $(k_1 -1)(k_2 -1)$ 
+& & \Rightarrow & &  total of 23 DF (k_1 k_2 -1)  \\ 
+     & & &  \longrightarrow  & grade 5 DF (k_1 -1) \\
+     & & &  \longrightarrow  & ethn 3 DF \\
+     & & &  \longrightarrow  & grade:ethn 15 DF (k_1 -1)(k_2 -1)
 \end{align*}
+```
+In the table, $\mathtt{grade:ethn}$ has 11 DF instead of our calculated
+15. Missing values from certain combinations take out DF. There might be
+no values in certain combinations, take OTHERethn and grade7 eg.
 
-In the table, grade:ethn has 11 DF instead of our calculated 15. Missing values from certain combinations take out DF. There might be no values in certain combinations, take OTHERethn and grade7 eg. 
+### Marginality principle
+
+Rationale: when model selection, want to have a model in which if
+heredity effect is strong (interaction strong) both main effects are
+strong (strong heredity) or at least one main effect is (weak heredity).
+
+# Lecture 15: Linear mixed-effects models
+
+**Midterm information.** From Faraway, chapter 10 and 11 (last two
+lectures). Not the state of the art. Skipped principle components,
+partial least squares (important topic). Everything up until linear
+mixed-effects models. Primary focus on variable selection. Bayesian
+variable selection won't be covered for the midterm.
+
+10 subproblems answers in a few lines of code, a bit of explaining
+results. Turn in a Rmarkdown preferrably. Code needs to be
+self-sufficient (ie include package installing/loading).
+
+**Recap and erratum**
+
+-   For $k$ levels, $k-1$ dummy variables however choice of dummy yields
+    different treatment (deviation contrasts, dummy coding...)
+-   ANOVA specificity in R: why F-stat isn't equal to T-stat for
+    continuous variables?
+
+Get $H_0:Y = X_1\beta_1+X_2\beta_2+\epsilon$, to get the F-stat, run
+first full model to get SS for each factors and error then
+$H_1: Y=X_2\beta_2+\varepsilon$. However by default, R runs a stepwise
+regression in ANOVA.
+
+```{r}
+#anova(fit2)
+```
+
+Runs sequentially the anova command to produce the SS.
+
+```{r}
+#fit1 <- lm(y ~ x2)
+#fit2 <- lm(y ~ x1+x2)
+#anova(fit1, fit2)
+```
+
+To get the anova table with the correct statistics, we need to run both
+models as above.
+
+## Linear Mixed-effects Models
+
+### Toy example: non destructive testing for longitudinal stress in railway rails
+
+*One way classification*: data has 8 obs, 2 variables (measure of how
+much travelled and which rail was observed - 6 rails possible). There
+are 6 different groups with three random observations. How do we manage
+to do our regression in that case?
+
+```{r}
+library(nlme)
+data(Rail)
+Rail
+```
+
+```{r}
+plot(Rail)
+```
+
+#### Neglecting group structure
+
+Assuming $Y_{ij} = \beta_i + \varepsilon_{ij}$ then we get the
+following:
+
+```{r}
+fm2Rail.lm <- lm(travel ~ Rail -1, data=Rail)
+summary(fm2Rail.lm)
+```
+
+One way ANOVA, can see that for one single factor don't need to declare
+it (but should), here "-1" since if we have an intercept, it will
+represent the estimated value for first track. Then estimate for Rail2
+is the difference of estimates for second and first track, same for
+Rail3 with third and first track. Removing the intercept gives the
+individual estimates for each tracks.
+
+#### Random Effects model
+
+For a particular track, we can run experiments. There is randomness each
+time i take a measure on this track's particular measure hence
+$\epsilon_{ij} \sim N(0, \sigma^2)$.
+
+$$y_{ij}=\beta + b_i + \epsilon_{ij}$$
+
+But also, we are interested in how well our six tracks reflect the
+population of tracks: sampling from all possible tracks 6 times. Also
+adding a level of randomness $b_i \sim N(0, \sigma_b^2)$.
+
+Assume $\epsilon_{ij}, b_i$ independent.
+
+Multilevel: first level track selection, second level of measuring for
+each track. Hierarchical in the levels. What is random? Given a track,
+the travel time isn't random however we can see it as random if we
+consider that we sample the track.
+
+We could run for each track the lm and average out the result. This sort
+of work but isn't too precise as we dilute a level of randomness.
+
+Note that the two important assumptions are:
+
+-   *independence of random and fixed effects*
+
+-   normality of population sampling and error (can be justified using
+    asymptotics)
+
+Independence isn't always straightforward. Thought experiment with
+confounding issue: sampling tracks in California and get californian
+engineers to check and sampling in North East US and get NY engineers to
+check might lead to confounding due to bias. We need to randomise to get
+independence of fixed and random effects.
+
+Model: $$y_i = 1 \cdot b_i + \epsilon_{i,j} +\beta$$ so random effect on
+intercept and fixed effect on intercept. See that if we ignore the
+structure, that says any lm on this will yield an intercept that is a
+mixture of random and fixed effects.
+
+No fixed effect so regress on intercept, specify random effect using "\|
+Rail"
+
+```{r}
+fm1Rail.lm <- lme(travel ~ 1, data=Rail, random= ~ 1| Rail)
+summary(fm1Rail.lm)
+```
+
+Here use REML (restricted max likelihood estimate) more stable in
+general that MLE. MLE is more reliable but doesn't always exist here,
+REML is computationally more stable.
+
+Interpretation: In *Random effects*, *(intercept)* reads as the only
+possible intercept $\beta$ "\| Rail". *StdDev* indicates we are looking
+at the std dev of this intercept with the *Residual* is our
+$\epsilon_{ij}$.
+
+#### Assessing the fitted model
+
+```{r}
+plot(fm1Rail.lm)
+```
+
+6 tracks $\rightarrow$ 6 fitted values $\beta + b_i$ and 18 residuals
+$\epsilon_{ij}$.
+
+Note that fixed effect model is probably fitting better. However from
+model selection point of view, random effects is preferrable: instead of
+5 dummy variables (ie 5 DF) we only have 1 DF through the variance of
+fixed effect.
+
+```{r}
+anova(fm1Rail.lm)
+```
+
+ANOVA tests for fixed effect.
+
+### Randomised block design
+
+Now with two classification factors: they are not entirely symmetric.
+For one we are really interested to identify its effect, the second one
+is here for estimating correctly in our design (often considered as
+blocking factor) we use the experimental factor for fixed effects and
+the blocking factor for random effects.
+
+$y_{ij} = b_i + \beta_j + \epsilon_{ij}$
+
+In matrix form: $Y = X\beta+Z b + \epsilon$
+
+with $Y = \begin{pmatrix}y_{i,1} \\ \vdots \\ y_{i,9} \end{pmatrix}$
+
+#### A benchmark example
+
+```{r}
+summary(ergoStool)
+```
+
+9 people, 4 different chairs. Want to check the quality of chair: score
+giving the effort of standing from the chair. We expect 36 obs, with 9
+people, 4 chair types. We don't care much about the 9 people randomly
+sampled through the pool of customer, we care about what the average
+customer will choose. For the chair, we are interested in the evaluation
+of each types. Hence we put fixed effects on chair, and customer on
+random effects as different taste lead to different choice.
+
+```{r}
+plot(ergoStool)
+```
+
+```{r}
+plot.design(ergoStool)
+```
+
+#### Check contrasts
+
+```{r}
+contrasts(ergoStool$Type)
+```
+
+```{r, R.options=FALSE}
+ergoStool1 <- ergoStool[ergoStool$Subject == "1",]
+model.matrix(~ ergoStool$Subject, data=ergoStool, ergoStool1)
+```
+
+#### Fit the mixed effects model
+
+```{r}
+fm1Stool <- lme(effort ~ Type, data=ergoStool, random=~ 1|Subject)
+summary(fm1Stool)
+```
+
+# Lecture 16: Linear mixed effect models
+**Notes on project/exam**: Schedule an office hour to expose what you want to do. 
+Short presentation of what kind of data analysis. Final exam on Dec. 12, complementary with the project (in-class). 
+
+Related with designed experiments: treatment and blocking factors. Misperception nowadays of thinking statistics in a very passive way using observational data, we don't have a good control of how experiment and data was collected. For designed experiments, we have better control but then need to distinguish what happens in the randomisation. Two factors: treatment (ex applying fertilizer on which we have control) and blocking factor (other factors we have no control of but want to use some randomisation). 
 
 
-### Marginality principle 
-Rationale: when model selection, want to have a model in which if heredity effect is strong (interaction strong) both main effects are strong (strong heredity) or at least one main effect is (weak heredity). 
+Model: $$y_{ij}=\mu_i + b_j + \epsilon_{ij}$$
+with $\mu_i$ to capture treatment effect (indexed by $i$) and $b_j$ the random effect (indexed by $j$). 
+
+Why would we choose random design over fixed design? Diminishing the number of degrees of freedom in estimation. Random effect: reduced version of the fixed effect model. 
+
+
+
+
 
 
 

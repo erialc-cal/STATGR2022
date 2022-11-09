@@ -1,0 +1,425 @@
+---
+title: "Applied Statistics"
+author: "Claire He"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+**Packages and data**
+
+```{r, echo=FALSE}
+install.packages(c("leaps", "faraway"))
+install.packages("olsrr")
+install.packages("ggpubr")
+install.packages("tidyverse")
+```
+
+```{r, echo=FALSE}
+library(ggpubr)
+library(gtable)
+library(leaps)
+library(ggplot2)
+library(olsrr)
+library(glmnet)
+library(boot)
+library(car)
+library(dplyr)
+```
+
+```{r, echo=FALSE}
+data(mtcars)
+help(mtcars)
+set.seed(1234)
+```
+
+# Hypothesis Testing Based Approach
+
+## Question a) Forward selection
+
+For forward selection we start with null model and add predictors according to 5% cutoff at p-value rule.
+
+```{r}
+forward_selection <- function(data){
+  M1 <- lm(mpg ~1, data=data)
+
+  minpvalue = 0
+  for (i in 1:length(data)){
+    Mf <- lm(mpg ~., data=data)
+
+    Add1 = add1(M1, scope=Mf, data=data, test='F')
+    print(Add1)
+    minpvalue <- min(Add1$"Pr(>F)"[-1])
+    print(minpvalue)
+    if  (minpvalue<0.05){
+    var_name = rownames(Add1[which(Add1$"Pr(>F)"== minpvalue),])
+    print(var_name)
+    M1 <- update(M1, reformulate(paste0(". +",var_name), "."))
+    }
+    else{
+    break
+    }
+  }
+  return(summary(M1))
+}
+
+forward_selection(data=mtcars)
+```
+
+There is no significative covariate to add at our 5% cutoff in the last iteration. None of the above models are selected. The Forward Selection based on hypothesis testing chooses therefore the model with predictors wt and hp: $$mpg \sim hp + wt$$.
+
+## Question b) Backward selection
+
+For backward selection we start with full model and drop predictors according to 5% cutoff at p-value rule.
+
+```{r}
+backward_selection <- function(data){
+  Mf <- lm(mpg~., data=data)
+  maxpvalue = 1
+  for (i in 1:length(data)){
+    maxpvalue <- max(summary(Mf)$coefficients[-1,4]) 
+    if(maxpvalue < 0.05){
+      break
+    }
+    else {
+    var_name = names(which(summary(Mf)$coefficients[-1,4]== maxpvalue))
+    print(summary(Mf))
+    print(var_name)
+    Mf <- update(Mf, reformulate(paste0(". -",var_name), "."))
+    
+    }
+  }
+  print(summary(Mf))
+}
+
+backward_selection(mtcars)
+```
+
+Backward selection has lead to select the model $$mpg \sim wt + qsec + am$$
+
+# Best subset selection
+
+## Question c) Best subset selection
+
+We now want to perform best subset for variable selection.
+
+```{r}
+fit <- lm(mpg ~ ., data=mtcars)
+best.lm <- ols_step_best_subset(fit)
+best.lm
+best.lm2 <- regsubsets(mpg~ ., data=mtcars, nvmax=10)
+```
+
+We can read the significant covariates obtained through best subset model selection. It chooses for each subset sizes:
+
+-   for 1 predictor the model $mpg \sim wt$,
+-   for 2 predictors it chooses $mpg \sim cyl+wt$,
+-   for 3 predictors it chooses $mpg \sim wt + qsec + am$,
+-   for 4 it chooses $mpg \sim hp+wt + qsec + am$,
+-   for 5 it chooses $mpg \sim disp+hp+wt + qsec + am$,
+-   for 6 it chooses $mpg \sim disp+hp+wt + qsec + am+drat$,
+-   for 7 it chooses $mpg \sim disp+hp+wt + qsec + am+drat+gear$,
+-   for 8 it chooses $mpg \sim disp+hp+wt + qsec + am+drat+gear+carb$
+-   and for 9 it chooses $mpg \sim disp+hp+wt + qsec + am+drat+gear+ carb +vs$
+
+## Question d) Model fit vs AIC, BIC, GCV, LOOCV and adjusted R2
+
+*ols_step_best_subset* yields AIC, BIC and adjusted R2, we want to know the GCV and LOOCV metrics for our best subsets. We can obtain GCV using *regsubset* that gives us the RSS for the same best subset models. For LOOCV we have to compute it manually as follows:
+
+```{r}
+#Retrieving the best models for each size
+varlist <- as.list(as.list(strsplit(best.lm$predictors, " ")))
+new.lm <- function(x) {
+    lm(reformulate(x, 'mpg'), data = mtcars)
+}
+
+# LOOCV function for each model
+loocv <- function(fit){
+  h=lm.influence(fit)$h
+  mean((residuals(fit)/(1-h))^2)
+}
+
+# Best subset LOOCV
+best_loocv <- function(list){
+cv.li <- c(1:10)
+for (i in 1:10){
+  cv.li[i] <- loocv(new.lm(list[[i]]))
+}
+return(cv.li)
+}
+
+best_loocv(varlist)
+```
+
+```{r}
+model_size <- c(1:10)
+n <- rep(10, times=10)
+criterion <- cbind( 
+  x      = model_size,
+  AIC    = best.lm$aic,
+  BIC    = best.lm$sbc,
+  AdjR2  = best.lm$adjr,
+  GCV    = summary(best.lm2)$rss/(n-model_size)^2,
+  LOOCV  = best_loocv(varlist)
+)
+```
+
+```{r}
+criterion <- as.data.frame.matrix(criterion)
+p1 <- ggplot(criterion, aes(x, AIC)) +
+  geom_line()+geom_point()
+p2 <- ggplot(criterion, aes(x, BIC)) +
+  geom_line()+geom_point()
+p3 <- ggplot(criterion, aes(x, GCV)) +
+  geom_line()+geom_point()
+p4 <- ggplot(criterion, aes(x, AdjR2)) +
+  geom_line()+geom_point()
+p5 <- ggplot(criterion, aes(x, LOOCV)) +
+  geom_line()+geom_point()
+ggarrange(p1, p2, p4, p3, p5, widths = c(1.5,2))
+```
+
+The curves are not monotonic except for GCV at a glance - but zooming in we can see that even GCV is not monotonic. We shouldn't expect a monotonic curve, this has to do with the trade-off between variance and bias: with all variables, we have better fit, however variance grows because the noise adds up as well for each added variables.
+
+```{r}
+criterion$x[which(criterion$AIC == min(criterion$AIC))]
+criterion$x[which(criterion$BIC == min(criterion$BIC))]
+criterion$x[which(criterion$AdjR2 == max(criterion$AdjR2))]
+criterion$x[which(criterion$GCV == min(criterion$GCV))]
+criterion$x[which(criterion$LOOCV == min(criterion$LOOCV))]
+```
+
+We see that the best model size for AIC among best subsets is 3, for BIC as well we select 3, to maximise ajusted R square we choose the best subset model of size 5, for GCV size 2 and for LOOCV size 4.
+
+## Question e) Comparison of criteria
+
+```{r}
+summary(best.lm2)
+```
+
+We note that AIC and BIC pick model size 3, LOOCV size 4 and adjusted R square size 5. These models have overlapping covariates. On the other hand, model 2 is selected using GCV and uses covariate *cyl* that is never chosen by the other criteria. The difference of result using GCV can be explained by the fact that our data has 32 observations, we'd expect for a good pick of model that the GCV score is approximately equal to Mallow's Cp (which is loosely related to our other metrics as well) when the number of observation is large enough: $GCV(\mathcal{M})= \frac{RSS_{\mathcal{M}}}{(n-|\mathcal{M}|)^2} \approx RSS_{\mathcal{M}} \big( 1 + \frac{2|\mathcal{M}|}{n}\big) \approx C_p = RSS_{\mathcal{M}} + 2\hat{\sigma}^2 |\mathcal{M}|$. We also see that the choice of LOOCV and GCV is really different which can be surprising at first. Both take in account the effect of influential points through leverage, however GCV takes an average of the leverage which in this case can be skewed by a very high leverage point in this very small number of observations. On the other hand, we see that adjusted R square picks out the highest number of covariates. Indeed it is based on the R-square which always grows with more predictors (as it is focused on fitting the data well) with a correction to avoid overfitting by adjusting for model complexity. However we see here that despite the correction it selects the most complicated model. AIC and BIC are similar criteria which are information based so it is no surprise they pick out the same model.
+
+## Question f) Bootstrap for model selection
+
+We want to apply residual resampling 100 times for each best subsets model.
+
+```{r}
+boot_res <- function(x) {
+    lm1 <- lm(reformulate(x, 'mpg'), data = mtcars)
+    residuals <- resid(lm1)
+    res <- sample(1:length(residuals), replace = TRUE)
+    boot.Y  <-  mtcars[,1] + residuals[res]
+    mtcars  <- mtcars %>% mutate(fitted = boot.Y) 
+    boot.lm <- lm(reformulate(x, 'fitted'), data = mtcars)
+    return(boot.lm)
+}
+# one bootstrap sample along residuals for best subset model 
+AIC(boot_res(varlist[[2]]))
+
+```
+
+```{r}
+aic <- list()
+bic <- list()
+adjr2 <- list()
+looCV <- list()
+gcv <- list()
+model_num <- list()
+it <- list()
+for (i in 1:100){
+  for (var in 1:length(varlist)){
+    # bootstrap
+    boot.lm <- boot_res(varlist[[var]])
+    # computing our criteria
+    aic <- append(aic, AIC(boot.lm))
+    bic <-  append(bic, BIC(boot.lm))
+    adjr2 <-  append(adjr2, summary(boot.lm)$adj.r.squared)
+    RSS <-  sum(resid(boot.lm)^2)
+    looCV <- append(looCV, loocv(boot.lm))
+    gcv <-  append(gcv, RSS/(10-length(varlist[[var]]))^2)
+    # storing which model
+    model_num <- append(model_num, var)
+    it <- append(it, i)
+  }
+}
+boot_crit <- data.frame(unlist(model_num), unlist(it), unlist(aic), unlist(bic), unlist(adjr2), unlist(looCV),  unlist(gcv))
+
+```
+
+```{r}
+boot_crit <- boot_crit %>% 
+        rename("num"= "unlist.model_num.", "res_it"="unlist.it.","AIC"="unlist.aic.", "BIC"="unlist.bic.", "AdjR2"="unlist.adjr2.", "LOOCV"="unlist.looCV.", "GCV"="unlist.gcv.")
+boot_crit
+```
+
+```{r}
+model_freqAIC <- list()
+model_freqBIC <- list()
+model_freqLOOCV <- list()
+model_freqGCV<- list()
+model_freqAdjR2 <- list()
+for (i in 1:max(boot_crit$res_it)){
+  subset = filter(boot_crit, res_it == i)
+  model_freqAIC <- append(model_freqAIC, boot_crit[which(subset$AIC == min(subset$AIC)),]$num)
+  model_freqBIC <- append(model_freqBIC, boot_crit[which(subset$BIC == min(subset$BIC)),]$num)
+  model_freqGCV <- append(model_freqGCV, boot_crit[which(subset$GCV == min(subset$GCV)),]$num)
+  model_freqAdjR2 <- append(model_freqAdjR2, boot_crit[which(subset$AdjR2 == max(subset$AdjR2)),]$num)
+  model_freqLOOCV <- append(model_freqLOOCV, boot_crit[which(subset$LOOCV == min(subset$LOOCV)),]$num)
+
+}
+
+
+model_freqLOOCV <- as.data.frame(table(unlist(model_freqLOOCV)))
+model_freqGCV<- as.data.frame(table(unlist(model_freqGCV)))
+model_freqAIC<- as.data.frame(table(unlist(model_freqAIC)))
+model_freqBIC<-as.data.frame(table(unlist(model_freqBIC)))
+model_freqAdjR2<- as.data.frame(table(unlist(model_freqAdjR2)))
+
+#freqdf = data.frame(LOOCV =model_freqLOOCV, GCV = model_freqGCV, AIC = model_freqAIC, BIC = model_freqBIC, AdjR2 = model_freqAdjR2)
+```
+
+```{r}
+p1 <- ggplot(model_freqLOOCV, aes(x =  reorder(Var1, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+p1 <- p1 + ggtitle("LOOCV") +
+  xlab("Model number") + ylab("Frequency")
+
+p2<- ggplot(model_freqGCV, aes(x =  reorder(Var1, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+p2 <- p2 + ggtitle("GCV") +
+  xlab("Model number") + ylab("Frequency")
+
+p3 <- ggplot(model_freqAdjR2, aes(x =  reorder(Var1, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+p3 <- p3 + ggtitle("Adjusted R square") +
+  xlab("Model number") + ylab("Frequency")
+
+p4 <- ggplot(model_freqAIC, aes(x =  reorder(Var1, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+p4 <- p4 + ggtitle("AIC") +
+  xlab("Model number") + ylab("Frequency")
+
+p5 <- ggplot(model_freqBIC, aes(x =  reorder(Var1, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+p5 <- p5 + ggtitle("BIC") +
+  xlab("Model number") + ylab("Frequency")
+ggarrange(p1, p2, p4, p3, p5, widths = c(1.5,2))
+```
+
+With bootstrapping, we see that LOOCV chooses most often model 5. However this choice only happens about 22% of our resampling, and we can see that 4,3,6 are also model often selected with LOOCV (about 17% of the time). On the other and, GCV chooses model 2 about 50% of our resampling. AIC, BIC both choose model 3, however that choice happens almost 30\% of the time with BIC against 18\% with AIC. AIC also chooses model 4 and 5 around 15\% of the time. In contrasts, the second most frequent selected model which is 2 for BIC has frequency around 20\%. So 3 stands out more for BIC than AIC as a choice (can be explained by the fact that BIC is more consistent while AIC more efficient). For adjusted R2 we see two models that jump out, model 4 and model 6 (which have similar covariates). 
+
+# LASSO
+
+## Question g) Creating noisy variables
+
+We create noisy variables by permutating each variable randomly.
+
+```{r}
+my.data <- mtcars %>% mutate(
+  cyl1 = sample(cyl), 
+  disp1 = sample(disp),
+  hp1 = sample(hp),
+  drat1 = sample(drat),
+  wt1 = sample(wt),
+  qsec1 = sample(qsec),
+  vs1 = sample(vs),
+  am1 = sample(am),
+  gear1 = sample(gear),
+  carb1 = sample(carb))
+```
+
+## Question h) Solution paths
+
+LASSO regression and solution paths. Note that we don't rescale since it is performed as default in glmnet.
+
+```{r}
+lasso.fit <- glmnet(my.data[,-1], my.data[,1])
+plot(lasso.fit)
+```
+
+We see that the solution path starts with three non zeros coefficients for small L1 norm then jumps to more than 10 non zeros coefficients. We use CV next to determine our tuning parameter and estimates.
+
+## Question i) Variable selection
+
+```{r}
+lassoCV.fit <- cv.glmnet(data.matrix(my.data[,-1]),my.data[,1], nfolds=10)
+plot(lassoCV.fit)
+```
+
+Selected tuning parameters: CV gives two proposals for the selection of $\lambda$ : here $\lambda \in \{ -0.22, 0.43\}$. The first one minimises out-of-sample loss in CV and the second is the largest value of $\lambda$ that is at most 1 standard deviation away from the out-of-sample loss proposal. We see that for both choices we have 3 non-zeros coefficients.
+
+```{r}
+c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)
+round(log(c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)),2)
+```
+
+See that the variables selected through lasso with cross validation are *cyl*, *hp* and *wt*. None of the noisy variables have been selected.
+
+```{r}
+coef(lassoCV.fit, m=lassoCV.fit$lambda.min)
+coef(lassoCV.fit, s=lassoCV.fit$lambda.1se )
+```
+
+## Question j) Iterating the procedure
+
+```{r}
+freqlist= list()
+for (i in 1:100){
+  # generating noisy variables
+  my.data <- mtcars %>% mutate(
+    cyl1 = sample(cyl), 
+    disp1 = sample(disp),
+    hp1 = sample(hp),
+    drat1 = sample(drat),
+    wt1 = sample(wt),
+    qsec1 = sample(qsec),
+    vs1 = sample(vs),
+    am1 = sample(am),
+    gear1 = sample(gear),
+    carb1 = sample(carb))
+  # LASSO CV with 10 folds
+  lassoCV.fit <- cv.glmnet(data.matrix(my.data[,-1]),my.data[,1], nfolds=10) 
+  # get coefficients 
+  coef_df <- coef_df %>% mutate(coef.name = dimnames(coef(lassoCV.fit))[[1]], coef.value = matrix(coef(lassoCV.fit)))
+  # get non zeros coef and variables in our list to count frequencies
+  freqlist <- append(freqlist, list(subset(coef_df, coef.value != 0)$coef.name))
+}
+```
+
+```{r}
+# collapsing the list 
+freqlist = unlist(freqlist)
+# get frequencies
+frequencies <- table(freqlist)/100
+df <- as.data.frame(frequencies)
+ggplot(df, aes(x =  reorder(freqlist, Freq), y=Freq)) + 
+  geom_bar(stat = "identity")
+
+```
+
+The most frequently chosen covariates are *cyl*, *hp* and *wt*. Note that for our other model selection methods, if *wt* is the most chosen covariate, and *hp* as well, only two best subsets models include *cyl* (including the full model). The forward selection model also chose *hp* and *wp*.
+
+# Summary of all variable selection procedures
+
+*Hypothesis testing methods*
+
+-   Forward selection $mpg \sim hp + wt$
+-   Backward selection $mpg \sim wt + qsec + am$
+
+*Best subset selection methods*
+
+-   AIC : 18 \% $mpg \sim wt + qsec + am$
+-   BIC : 30\% $mpg \sim wt + qsec + am$
+-   GCV : 50\%  $mpg \sim cyl+wt$ 
+-   LOOCV : 22\% $mpg \sim disp+hp+wt + qsec + am$
+-   AdjR2 : 18 \% $mpg \sim hp +wt + qsec + am$
+
+*LASSO* 
+
+- $mpg \sim hp + wt$
+
+Note that AIC, BIC and backward selection agree on the same model choice with the car consumption being predicted with mile time, transmission method and weight. Forward selection and LASSO both choose a more parcimonious model with car consumption in miles per gallon being explained by gross horsepower and car weight. Adjusted R2 and LOOCV choose models that compromise the choice obtained with the first group of criteria and the second. GCV chooses number of cylinders as covariate unlike other models. 

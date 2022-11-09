@@ -1,0 +1,129 @@
+---
+title: "Random number generation"
+output: html_notebook
+---
+
+```{r}
+runif(10) 
+# gives 10 random variables uniform in 0,1 
+set.seed(100)
+hist(runif(100), prob=TRUE)
+lines(density(runif(100)))
+
+hist(rbinom(190, 5, 0.5), prob=TRUE)
+lines(density(rbinom(190, 5, 0.5)))
+
+hist(rexp(100,2), prob=TRUE)
+lines(density(rexp(100,2)))
+
+hist(rnorm(100, 0,1), prob=TRUE)
+lines(density(rnorm(100, 0,1)))
+```
+
+# Simulating from uncommon distributions
+
+## Inverse tranform method if one dimensional
+Example pdf $f_x(x)=3x^2, x \in [0,1]$. 
+For $x \in [0,1]$, $F(x) = \int^x 3x^2 dx = x^3$ ie $F(x)=u \Rightarrow F^{(-1)}(u)=x^{1/3}$. 
+
+```{r}
+n <- 1000
+u <- runif(n)
+F.inverse <- function(u){return(u^(1/3))}
+x <- F.inverse(u)
+```
+
+```{r}
+hist(x)
+```
+
+
+## Enveloppe rejection method 
+
+```{r}
+draw.circle(0,0,rad, border='red')
+lines(c(-rad, -rad, ))
+```
+
+
+
+## Metropolis Hastings
+We use exponential as a target with mean 1.
+
+```{r}
+log_exp_target <- function(x){ return(dexp(x, rate=1, log=TRUE))}
+```
+
+
+
+```{r}
+MCMC <- function(log_target, n, initial, proposalsd) {
+  x <- rep(0,n)
+  x[1] <- initial
+  
+  for (i in 2:n){
+    currentx <- x[i-1]
+    proposedy <- rnorm(1, mean=currentx, sd = proposalsd)
+    alpha <- exp(log_target(proposedy) - log_target(currentx))
+    # here gaussian is symmetric so q(x,y)=q(y,x)
+    if (runif(1) < alpha){
+      x[i] <- proposedy # accept
+    } else {
+      x[i] <- currentx # reject
+      }
+     }
+  return(x)
+}
+
+```
+
+
+
+
+
+```{r}
+z1 <- MCMC(log_exp_target, 1000, 3,1)
+z2 <- MCMC(log_exp_target, 1000, 1,1)
+z3 <- MCMC(log_exp_target, 1000, 5,1)
+```
+
+```{r}
+plot(z1, type='l')
+lines(z2, col='red')
+lines(z3, col='blue')
+```
+Fairly good initialisation here. 
+
+```{r}
+hist(z1, breaks=seq(0, max(z1), length=20), prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+hist(z2, breaks=seq(0, max(z2), length=20), prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+hist(z3, breaks=seq(0, max(z3), length=20), prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+```
+Bad initialisation
+
+```{r}
+zbad <- MCMC(log_exp_target, 1000, 500, 1)
+hist(zbad, breaks=seq(0, max(zbad), length=20), prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+```
+
+But with ienough iterations
+```{r}
+zbad <- MCMC(log_exp_target, 1000000, 500, 1)
+hist(zbad, breaks=seq(0, max(zbad), length=20), prob=TRUE)
+curve(dexp(x, rate=1), add=TRUE, col='red')
+```
+
+
+
+
+
+
+
+
+
+
+
