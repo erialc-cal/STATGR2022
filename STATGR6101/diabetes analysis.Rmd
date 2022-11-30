@@ -1,0 +1,58 @@
+---
+title: "applied projects: Diabetes modelling"
+output: html_notebook
+---
+PIMA Indian Dataset
+
+```{r}
+pima <- read.csv("/Users/clairehe/Downloads/diabetes.csv")
+head(pima)
+```
+Hastie dataset
+
+"Ten baseline variables, age, sex, body mass index, average blood pressure, and six blood serum measurements were obtained for each of n = 442 diabetes patients, as well as the response of interest, a quantitative measure of disease progression one year after baseline."
+```{r}
+hastie <- read.table("https://www4.stat.ncsu.edu/~boos/var.select/diabetes.tab.txt", header=TRUE)
+head(hastie)
+```
+
+Vanderbilt datasets
+The data consist of 19 variables on 403 subjects from 1046 subjects who were interviewed in a study to understand the prevalence of obesity, diabetes, and other cardiovascular risk factors in central Virginia for African Americans. According to Dr John Hong, Diabetes Mellitus Type II (adult onset diabetes) is associated most strongly with obesity. The waist/hip ratio may be a predictor in diabetes and heart disease. DM II is also agssociated with hypertension - they may both be part of "Syndrome X". The 403 subjects were the ones who were actually screened for diabetes. Glycosolated hemoglobin > 7.0 is usually taken as a positive diagnosis of diabetes. For more information about this study see *Willems JP, Saunders JT, DE Hunt, JB Schorling: Prevalence of coronary heart disease risk factors among rural blacks: A community-based study. Southern Medical Journal 90:814-820; 1997*. Source https://biostat.app.vumc.org/wiki/Main/DataSets 
+```{r}
+RAA_registry <- read.csv("https://query.data.world/s/c6llws4t2popv3s5e6hmxsksqvpz4e", header=TRUE, stringsAsFactors=FALSE)
+RAA_diabetes <- read.csv("https://query.data.world/s/udrvgiq2ewc7cv3dka34dx2uhhjygl", header=TRUE, stringsAsFactors=FALSE)
+library("httr")
+library("readxl")
+GET("https://query.data.world/s/o6fsohkoa2hnams22cgyqvl7xol7o3", write_disk(tf <- tempfile(fileext = ".xlsx")))
+RAA_dclass <- read_excel(tf)
+```
+
+
+USCDI dataset
+```{r}
+uscdi <- read.csv("/Users/clairehe/Downloads/U.S._Chronic_Disease_Indicators__Diabetes.csv")
+```
+
+# Exploratory analysis
+
+```{r}
+plot(pima)
+```
+```{r}
+plot(hastie)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

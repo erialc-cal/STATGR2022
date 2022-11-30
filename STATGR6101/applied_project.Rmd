@@ -1,49 +1,75 @@
 ---
-title: "Applied project: Quasars"
+title: "Applied project: UEFA Champions League"
 output: html_notebook
 ---
+Packages 
 
 ```{r}
 library(zoo)
 ```
+Pre-processing of the data. 
+
+```{r}
+ucldf = read.csv("/Users/clairehe/Desktop/UEFA_CL_Player_stats.csv", header=T)
+head(ucldf)
+
+data <- as.matrix(is.na(ucldf))
+for (cols in 1:length(ncol)){
+  data[,cols]<- as.integer(data[,cols])
+}
+heatmap(data,Colv = NA, Rowv = NA, scale="column")
+```
+
+Missing data assessment
+```{r}
+ucldf <- ucldf[ucldf$X !="NA",]
+```
+
+```{r}
+colSums(is.na(ucldf))
+```
+
+```{r}
+ucldf
+```
+
+# Descriptive statistics
+
+```{r}
+summary(panel)
+```
+
+Recode categorical variables 
+
+```{r}
+panel$POINT_TYPE <- as.factor(panel$POINT_TYPE)
+panel$STATUS <- as.factor(panel$STATUS)
+```
 
 
 ```{r}
-csv = read.csv("https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2021-100522.txt", header=F, as.is=T)
-
-names(csv) = c("DATE", "TIME_UTC", "POINT_TYPE", "STATUS", 
-	"LATITUDE", "LONGITUDE", "WINDSPEED_KT", "PRESURE_MB", 
-	"NE_34KT", "SE_34KT", "NW_34_KT", "SW_34_KT",
-	"NE_50KT", "SE_50KT", "NW_50_KT", "SW_50_KT",
-	"NE_64KT", "SE_64KT", "NW_64_KT", "SW_64_KT")
-panel = cbind(HID = NA, HNAME = NA, csv)
-panel$HID = ifelse(grepl("AL|EP|CP", panel$DATE), panel$DATE, NA)
-panel$HNAME = ifelse(grepl("AL|EP|CP", panel$DATE), panel$TIME_UTC, NA)
-panel$HID = na.locf(panel$HID)
-panel$HNAME = na.locf(panel$HNAME)
-panel = panel[!grepl("AL|EP|CP", panel$DATE), ]
-panel$LATITUDE = trimws(panel$LATITUDE)
-panel$LONGITUDE = trimws(panel$LONGITUDE)
-panel$LATITUDE = ifelse(grepl("S", panel$LATITUDE), paste0("-", panel$LATITUDE), panel$LATITUDE)
-panel$LONGITUDE = ifelse(grepl("W", panel$LONGITUDE), paste0("-", panel$LONGITUDE), panel$LONGITUDE)
-panel$LATITUDE = as.numeric(sub("N|S", "", panel$LATITUDE))
-panel$LONGITUDE = as.numeric(sub("E|W", "", panel$LONGITUDE))
-panel$STATUS = trimws(panel$STATUS)
-panel$DECADE = paste0(substr(panel$DATE, 1, 3), "0")
-write.csv(panel, "2022-hurricane-panel.csv", row.names=F)
+fit<- lm(tlimth ~ ., data=tli)
+summary(fit)
 ```
 
 
 
 
 
+```{r}
+file <- "/Users/clairehe/Downloads/IST_corrected.txt"
 
+ist_data <- read.table(file, sep=",", header=TRUE)
+```
 
+```{r}
+head(ist_data)
+```
+```{r}
+coln <- c()
+df_ist <- ist_data[, coln]
 
-
-
-
-
+```
 
 
 

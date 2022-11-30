@@ -1,6 +1,6 @@
 ---
-editor_options: 
-  markdown: 
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -35,6 +35,7 @@ Faraway). Details can be found here
 library(faraway, HistData)
 library(ggplot2)
 library(GGally)
+library(dplyr)
 ```
 
 ## Regression to mediocrity
@@ -2084,8 +2085,10 @@ estimate.
 ### Polynomial regression
 ```{r}
 # data source https://opr.princeton.edu/Archive/Download.aspx?FileID=1174
-birthrates <- read.table("/Users/clairehe/Downloads/cohort.dat") 
-          # header=TRUE, skip=3)
+birthrates <- read.table("/Users/clairehe/Downloads/birthrates_all.csv", header=FALSE, skip=4, sep=",")
+birthrates <- as.data.frame(t(birthrates[c(1,253),-c(1,2,3,4,66,67)]))
+colnames(birthrates) <- c('Year', 'Birthrate')
+head(birthrates)
 ```
 
 ```{r}
@@ -2095,7 +2098,7 @@ plot(birthrates, pch=19, col='darkorange')
 Linear model with response birth rates counts, covariate time. Does not fit well. Non linear model. Can use polynomial regression. *poly* function creates dummy variables of the variable of interest to the degree of polynomial requested. 
 
 ```{r}
-lmfit <- lm(Birthrate ~ poly(Year, 5), data=birhtrates)
+lmfit <- lm(Birthrate ~ poly(Year, 5), data=birthrates)
 plot(birthrates, pch=19, col='darkorange')
 lines(birthrates$Year, lmfit$fitted.values, lty=1, col='deepskyblue', lwd=2)
 title('degree = 5')
@@ -2107,7 +2110,7 @@ Here we fit one decade at a time, will give a better fit but issues arise. Obvio
 ```{r}
 mybasis = matrix(NA, nrow(birthrates), 8)
 for (i in 1:8){
-  mybasis[,1]=birthrates$Year >= 1917 + 1*10
+  mybasis[,i]=birthrates$Year >= 1960 + i*10
 }
 lmfit <- lm(birthrates$Birthrate ~., data = data.frame(mybasis))
 plot(birthrates,pch=19, col='darkorange')
@@ -2117,6 +2120,7 @@ lines(birthrates$Year, lmfit$fitted.values, lty=1, col='deepskyblue', lwd=2)
 ### Piecewise polynomial
 
 ```{r}
+myknots <- c(1973, 1990, 2009)
 
 ```
 
@@ -2130,10 +2134,11 @@ Piecewise linear is already better than piecewise constant. Two main issues howe
 Is a class of piecewise polynomial basis that are continuous. 
 ```{r}
 pos <- function(x){x*(x>0)}
+
 mybasis = cbind('int'=1, 'x_1' = birthrates$Year,
-                  'x_2' = pos(birthrates$Year ~ myknots[1]),
-                  'x_3' = pos(birthrates$Year ~ myknots[2]),
-                  'x_4' = pos(birthrates$Year ~ myknots[3]))
+                  'x_2' = pos(birthrates$Year - myknots[1]),
+                  'x_3' = pos(birthrates$Year - myknots[2]),
+                  'x_4' = pos(birthrates$Year - myknots[3]))
 par(mar = c(2,2,2,0))
 matplot(birthrates$Year, mybasis[,-1], type="l", lty=1, lwd=2)
 title('Spline basis functions')
@@ -2169,7 +2174,7 @@ Second term -> add smoothness, allow to deviate from LM and fit better but contr
 ```{r}
 fit = smooth.spline(birthrates$Year, birthrates$Birthrate)
 plot(birthrates$Year, birthrates$Birthrate, pch=19)
-lines(seq(1917, 20003), predict(fit, seq(1917,2003)$y, col='deepskyblue', lty=1,lwd=3))
+#lines(birthrates$Year, predict(fit, birthrates$Year,  col='deepskyblue', lty=1,lwd=3))
 ```
 
 ```{r}
@@ -2193,6 +2198,215 @@ In the top model fit a constant, but can more generally fit a linear model or a 
 $$\sum_{i=1}^n \color{red}{w(x, x_i)} (y_i - a(x))^2 \rightarrow_{\min} \hat{f}(x)$$ 
 
 
+# Lecture 18 : Kernel density estimation
+
+
+
+## Kernel density estimation error
+Given a sample $X_1, \dots, X_n \sim f$ where $f$ unknown density, our goal is to estimate $f$. 
+Define a (statistical) kernel $k(t)$: 
+
+- $k$ is a density $\int k(t)dt = 1$ 
+- symmetry $k(-u)=k(u)$ so $\int t k(t)dt = 0$ 
+- $\int t^2 k(t) < \infty$ 
+
+Examples of kernel: Gaussianm Uniform, Vapnis-Epanechnikov (efficient)
+
+Define kernel density estimator $\hat{f}(x)=\frac{1}{nh}\sum_{i=1}^n k\big(\frac{x-X_i}{h\big)$ where $h$ is the bandwidth. 
+Remark KDE is a density $\int \hat{f}(x)dx = 1$. 
+
+How good is KDE? estimation error 
+$$E[\hat{f}(x)-f(x)]^2 = \underbrace{E[\hat{f}(x- E\hat{f}(x))]^2}_{Variance} + \underbrace{\big(E(\hat{f}(x)-f(x))\big)^2}_{Bias^2}$$
+Bias term, assume $||f''|| < \infty$ 
+\begin{eqnarray*}
+B(\hat{f}) & = & \frac{1}{n}\int k\big(\frac{x-X}{h}\big)f(y)dy - f(x) \\
+& = & \int k(z)f(x-hz)dz - f(x) \\
+& = & \int k(z)[f(x)-hz f'(x)+ \frac{h^2z^2}{2} \int_{0}^1 (1-u) f''(x-uhz)du]dz - f(x) \text{ by (Taylor expansion)} \\
+& = & \int k(z)[-hz f'(x)+ \frac{h^2z^2}{2} \int_{0}^1 (1-u) f''(x-uhz)du]dz \\
+& = & - f'(x) h \int z k(z) +\frac{h^2}{2} \int  \int_{0}^1 z^2 k(z) (1-u) f''(x-uhz)du dz \\
+\Rightarrow |B(\hat{f})|& \leq & \frac{h^2}{2}||f''||_{\infty} \int z^2 k(z)dz 
+\end{eqnarray*}
+
+
+Variance term 
+\begin{eqnarray*}
+E[\hat{f}(x- E\hat{f}(x))]^2 & = & \frac{1}{nh^2} Ek\big(\frac{x-X}{h}\big)^2 = \frac{1}{n}\underbrace{\big(E\hat{f}(x)\big)^2}_{f(x)+\mathcal{O}(h^2)} \\ 
+& = & \frac{1}{nh^2} \int k\big(\frac{x-y}{h}\big)^2 f(y)dy + \frac{1}{n}(f(x)+\mathcal{O}(h^2)) \\ 
+& = & \frac{1}{nh} \int k(z)^2 f(x-hz) dz + \frac{1}{n}(f(x)+\mathcal{O}(h^2))  \\
+& \leq & \frac{1}{nh} ||f||_{\infty} ||K||_2^2 + \frac{1}{n}||f||_{\infty}
+\end{eqnarray*}
+
+Adding these two bounds together
+\begin{eqnarray*}
+\text{MSE}(\hat{f}) & \leq & \frac{1}{nh} ||f||_{\infty}||K||_2^2 + C_K ||f''||_{\infty}^2 h^4 + \mathcal{O}(1/n) \\ 
+& \leq & \tilde{C_{f,K}}n^{-4/3}
+\end{eqnarray*}
+
+
+## KD integrated error 
+**Theorem** 
+See Topics Stats lecture notes. 
+
+
+# Lecture 19: EM methods 
+Non-parametric models -> on function class so infinite dimensional. Can always fit better then with more complicated models, however will incur variance by fitting the noise which we don't want. 
+Bandwidth helps determine how fitted to local the method is. This is a very computationally expensive method. Does not scale well for higher dimensions: if multivariate function, have to update evaluations on d-th times more points. 
+
+
+## Empirical risk minimisation
+Another type of kernel method. Assume $X_1, \dots X_n \sim P_\theta$ but we are not going to use this to estimate $\theta$ directly. $X_1,\dots,X_n$ be our data and a loss function $\ell(\theta, \text{data})$ that we want to minimise to obtain $\hat{\theta}$. 
+The question is on what are we minimising to get $\hat{\theta}$? This is a good framework form a statistical point of view since we have room to specify which class of function $\theta$ comes from. As opposed to lm that does the minimisation over the very constraining class of linear functions. 
+
+### Fisher consistency
+$$E\ell(\theta, \text{data}) \rightarrow_{\min} \theta^*$$ 
+Example. Regression $Y=\theta^*(X)+\epsilon$ for $(X_1, Y_1), \dots, (X_n, Y_n)$. And $\ell(\theta, \text{data}) = \frac{1}{n}\sum_i (Y_i - \theta(X_i))^2$. 
+\begin{eqnarray*} 
+E(\ell(\theta, \text{data})) &= & \frac{1}{n}\sum_iE((Y_i - \theta(X_i))^2) \\
+& = & \frac{1}{n}\sum_i E((Y_i - \theta^{*}(X_i))^2)+E((\theta^{*}(X_i) - \theta(X_i))^2)
+\end{eqnarray*} 
+
+### Generalised regression 
+Assume exponential family $Y|X \sim h(Y)\exp(-b(\theta^{*}(X))+ Y\theta^{*}(X))$ 
+$h$ plays a nuisance parameter role, like $\epsilon$s variance and $b$ is our parameter of interest. 
+
+Example. Binomial $Y|X=x \sim \mathcal{B}(\pi(x))$ then $Y|X=x = (\pi(x))^Y (1-\pi(x))^{1-Y} = \exp(\log(1-\pi(x))+ Y \log(\pi(x)/(1-\pi(x))))$. Where $b(\theta^*(x))= \log(1-\pi(x)$ and $\theta^*(x)=\log(\pi(x)/(1-\pi(x))))$.
+Why this form?
+- When $b$ strictly convex and differentiable, $b''> 0$.  
+- $E(Y|X)=b'(\theta^*(X))$ so call $\theta^*$ the canonical parameter.
+- $Var(Y|X) = b"(\theta^*(X))$
+
+Allows to deal with discrete response and count data, with likelihood by borrowing exponential family properties.
+
+\begin{eqnarray*}
+\ell(\theta, \text{data}) & = & \frac{1}{n}\sum_i b(\theta(X_i)-y_i -\theta(X_i)) \\
+E\ell(\theta, \text{data}) & = & \frac{1}{n}\sum_i b(\theta(X_i)-b'(\theta(X_i))\theta(X_i)) \\
+& \leq & \frac{1}{n}\sum_i b(\theta^*(X_i)-b'(\theta^*(X_i))\theta^*(X_i)) \text{ \ convexity}
+\end{eqnarray*}
+
+Note that when doing regression using GR, we are doing estimates on a transformation of the parameter, for binomial for ex, it's on the log-odds. 
+
+### Quantile regression
+
+Let $\tau$ be a quantile of $Y|X=x$ is $\theta^*(X)$. Then define $$\theta^*(x) = \inf \{y: P(Y \leq y|X=x) \geq \tau \}$$
+
+Regression $\rho_\tau(u)= \tau(u)_{-}+ (1-\tau)(u)_{+}$, now define the following loss function
+$\ell(\theta, \text{data})=\frac{1}{n} \sum_i \rho_\tau (y_i - \theta(X_i)) \rightarrow_{\min} \hat{\theta}$ 
+Now 
+\begin{eqnarray*}
+E\ell(\theta, \text{data}) & = & \frac{1}{n} \sum_i \tau E(y_i - \theta(X_i))_{-} + (1-\tau)E(y_i - \theta(X_i))_{+} \\
+& = & \tau \int_{-\infty}^{\theta(X)} (\theta(x)-u) f(u|X=x)du + (1-\tau) \int_{\theta(x)}^{\infty} (u-\theta(x))f(u|X=x)du \\
+\frac{\partial E\ell(\theta, \text{data})}{\partial \theta} & = &tau \int_{-\infty}^{\theta(X)}  f(u|X=x)du + (1-\tau) \int_{\theta(x)}^{\infty} f(u|X=x)du  
+\end{eqnarray*}
+
+### Density estimation
+Have $X_1, \dots, X_n \sim p(\cdot)$ and want to estimate $p$. Want to reparametrise because for $p$ constraints of density, non negative, between 0 and 1. 
+
+Let $\theta^*$ such that $p(x)=\frac{e^{\theta^{*}(x)}}{\int_{-\infty}^{\infty} e^{\theta^{*}(u)}du}$ then can estimate $\theta^*$ without constraints. 
+Also $\ell(\theta, \text{data}) = \frac{1}{n} \sum_i \theta(x_i) - \log \int e^{\theta(u)}du$. Note the link with poisson glm, by seeing we take count so int transforms to sum. 
+
+Cons for this method: can be a computational nightmare: minimising on a non convex loss here. 
+
+Ingenious solution by Silverman: 
+$\ell_{Sil}(\theta, \text{ data})= \frac{1}{n} \theta(X_i)-\int e^{\theta(u)}du$ 
+Check that this is Fisher consistent, convex and differnetiable. 
+Therefore has a unique minimiser. 
+
+
+
+# Lecture 21: Non parametric regresion
+Project: email the slides on the day before class. 
+References about non parametric regression: see pdf on discussion. 
+
+**Review**
+
+Lots of things we could do choosing the loss function:
+$$l(\theta, \text{data}) \rightarrow_{\min} \hat{\theta}$$
+
+- quantile regression
+- classification
+- density estimation 
+etc.
+
+Idea behind: **Fischer consistency** if can $l(\theta, \text{data}) \rightarrow_{\min} \hat{\theta}$, increasing $n$ data dimension $El(\theta, \text{data}) \rightarrow_{\min} \theta^*$.
+
+Caveat: what is our parameter space here? Can take the minimum on space of all measurable functions $\mathcal{F}$ for $\theta^*$. However in practice, can't do it for $l(\theta, \text{data}) \rightarrow_{\min} \hat{\theta}$, will lead to interpolation, since perfect fit would be our goal. Idea is to restrict the parameter space  $\Theta$. 
+
+Examples: 
+
+- Linear function space for linear regression $Y = \theta(X)+\epsilon$ with $\theta \in \Theta =\{ X^T\beta, \beta \in \mathbb{R}^p\}$. 
+- Splines : choose basis function and linear combination of them $\Theta = \{ \sum_j b_j(X)\nu_j : \nu_j \in \mathbb{R}\}$
+- Even more interesting things, can do EM on the functional class (popular in neural networks) $\Theta = \{ \sum_j \sigma(X^T \nu_j): \nu_j \in \mathcal{R}^p \}$ with $\sigma(u) = (u)_+$ the ReLU function. 
+
+Main considerations: 
+
+1. By taking a functional class $\Theta$ to be rich enough, can approximate well, and flexibility. 
+2. Should choose a functional class that enables fast computation 
+
+Leads to choice of RKHS (reproducing kernel hilbert spaces).
+
+## RKHS
+
+RKHS are Hilbert spaces $(\Theta, \langle \dot, \dot \rangle \)$, complete (e.g. functional here) spaces with an inner product. In which all the evaluation functions are continuous.
+
+
+We don't want to deal with the full functional space, too complicated, but want to work on a similar space than Euclidian space. Add an inner product for functions.
+
+Recall for inner product, properties of symmetry, bilinearity, positive definiteness. 
+
+Then for $f \in \Theta$ with values in $\mathcal{X}$, Riesz representation theorem guarantees linear $L_x : f \to f(x)$ evaluation functions such that $$L_x f = \langle f, \underbrace{k_x}_{\text{eval. f.}} \rangle$$
+Then define kernel $K : \mathcal{X}\times \mathcal{X} \to \Theta$ such that $K(x,y) = \langle k_x, k_y \rangle$. Note that $K$ is symmetric, positive, semi-definite and for $x_1, \dots, x_n$ can define matrix notation of kernel $K = (K(x_i, x_j))_{ij}$. 
+Example: $K(x,y) = x^T y$ is a kernel. 
+
+There is a one-to-one correspondance between RKHS and RK (reproducing kernel). Choosing the kernel from the example implies we are choosing a linear functional space for our model! 
+
+Base idea for any kind of statistical task: observing $x,y$ want to predict if a future $x^*$ to predict a $y$. Trying to use some sort of similarity between $x$'s. In LM, looking at this "similarity" through euclidian distance (see kernel of the example). Generalisation of that idea for more complex functional space, kernel gives a measure of similarity of any type of $x$'s that live in Hilbert spaces. 
+
+
+Example: 
+
+- linear $\leftrightarrow$ RK $(x,y) \mapsto x^Ty$
+- for RK gaussian kernel can link to $\mathbb{R}^p$ euclidian
+- in smoothing splines with $y=f(x)+\epsilon$, then $f(x)=\beta_0 + \beta_1 x + g(x)$ with 
+$g \in \mathcal{F} := \{ \theta : [0,1] \to \mathbb{R} | \theta(0)=\theta'(0)=0, \int (\theta"(u))^2 du < \infty \}$ $\leftrightarrow$ $\mathcal{F}$ is RKHS with RK $K(x,y) = \int_{0}^1 \frac{(x-t)_+}{2}\cdot \frac{(y-t)_+}{2} dt$. 
+
+## Methods of regularization
+
+From Ridge to regularized regression in RKHS, kernel trick, don't need to specify the functional space if we know the kernel and vice-versa. Inner product allows to reduce dimensino in that trick.
+Note $K$ semi definite positive, so can SVD to get a $K^{-1}$. 
+
+$$l(\theta, \text{data})+ \lambda \underbrace{||\theta||_K^2}_{\theta^T K^{-1}\theta} \rightarrow_{\min_{\Theta \leftrightarrow K}} \hat{\theta}$$
+
+Example: for $\Theta = \{ x^T\beta, \beta\in \mathbb{R}^d\}$, $||\theta_\beta ||_{\Theta}^2 = ||\beta||_2^2$. 
+
+**Representer Lemma**
+For $y_i = \theta(x_i) + \epsilon_i$ and loss $l(\theta, \text{data})$ depends on $\theta$ only through $\theta(x_i)$. For $\lambda > 0$ can solve for this
+
+$$\hat{\theta}(x) = \sum_{i=1}^n c_i K(x_i,x)$$
+
+$c_i = (K(x_i, x_j))_j$ kernel becomes a set of basis functions on which we estimate the whole of our parameter and $||\hat{\theta}||_K^2 = c^T G c$ with $G$ the Gram matrix. 
+
+Try showing results with Ridge regression. 
+
+
+## Structured non parametric
+### Additive model
+$$f(x) = f_1(x_1)+ \dots+ f_p(x_p)$$ 
+Can interpret each $f_i$ as some marginal effects, and can decompose on RKHS where $f$ has kernel $K$ and the decomposition for $f_1$ has $K_1$, ..., $f_p$ has $K_p$ and $K = \sum_i K_i$.  Can check stay RK. 
+
+### Varying coefficient model
+can allow for non linearity through $t$ 
+$$y = f(\underbrace{x}_{\in [0,1]^p},\underbrace{t}_{[0,1]}) + \epsilon$$
+then $f(x,t) = \underbrace{\beta_1(t)}_{K_1} x_1+ \dots \underbrace{\beta_p(t)}_{K_i} x_p$ stays RK using product space property of Hilbert space with $K((x,t), (x,',t'))=  K_1(t,t') x^Tx'$
+
+
+### Partial linear model
+$y = \underbrace{x^T}_{x}\beta+ \underbrace{f(t)}_{K_1}+\epsilon$ with kernel $K(x,x')= \int x(t)x'(t')K_1(t,t') dt dt'$ hence $y=\int x(t)\underbrace{\beta(t)}_{K_1} dt + \epsilon$. 
+
+
+For R and statistical treatment use $\texttt{mgcv}$ package (stable and inference), for more ML treatment, check ofr kernel ridge regression packages. 
+
+Important issue: choice of tuning parameters (critically important). Turns out that solution is linear in $y$ as in linear regression (see y-hat). Effect called 'linear smoother', so we can derive unbiased risk estimates etc. to evaluate how good estimate is and choose the one that gives best estimate. Implemented in mgcv, ML methods usually use some sort of cross validation. 
+Careful as with variable selection, automatical selection of tuning parameter have shortcomings.
 
 
 
