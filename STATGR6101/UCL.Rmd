@@ -1,0 +1,282 @@
+---
+title: "UCL player rating prediction"
+output: html_notebook
+---
+
+
+```{r}
+install.packages(c("leaps", "faraway"))
+install.packages("olsrr")
+install.packages("ggpubr")
+install.packages("tidyverse")
+install.packages("plotly")
+install.packages("grplasso")
+```
+
+```{r, echo=FALSE}
+library(ggpubr)
+library(gtable)
+library(leaps)
+library(ggplot2)
+library(olsrr)
+library(glmnet)
+library(boot)
+library(GGally)
+library(dplyr)
+library(grplasso)
+library(nlme)
+library(lme4)
+```
+
+# Intro example: dummy approach
+We are looking into predicting the ratings of Champions league players given their season performance. Usual statistics employed to assess for performance of football players are:
+
+- length of time on pitch (minutes played)
+- number of goals and shots per game
+- number of assists
+- pass success 
+- fouls (yellow or red cards)
+
+We start by looking at these for prediction on UEFA Champions league seasonal data from 13/14 to 20/21. 
+
+```{r}
+ucldf = read.csv("/Users/clairehe/Desktop/UEFA_CL_Player_stats.csv", header=T)
+
+df <- subset(ucldf, select= c("name", "season.year", "rating", "goals", "assists", "yellowCards")) #accuratePassesPercentage"
+summary(df)
+```
+Note that for our variable of interest we have 1664 missing values of ratings. Let's take out the missing values and use them to assess our prediction. 
+```{r}
+df1 <- df[which(!is.na(df$rating), arr.ind=TRUE),]
+pred1 <- df[which(is.na(df$rating), arr.ind=TRUE),]
+```
+
+```{r}
+plot(df1[,-c(1,2)])
+```
+
+```{r}
+model1 <- lm(rating ~ ., data= df1[,-c(1,2)])
+summary(model1)
+```
+
+Let's scrutinize the diagnostic plots: 
+```{r}
+plot(model1)
+```
+Homoscedascity assumption is acceptable but we see a pattern of outliers, and especially our plots highlight that normality of residuals isn't really holding here.
+
+```{r}
+pr <- predict(model1, pred1)
+head(pr)
+```
+
+
+
+# A more comprehensive approach
+
+
+First exploration of our data shows a big proportion of missing data for our total of 5733 data points for 109 variables. 
+```{r}
+na_plot <- function(df){
+  data <- as.matrix(is.na(df))
+  for (cols in 1:length(ncol)){
+    data[,cols]<- as.integer(data[,cols])
+  }
+  heatmap(data,Colv = NA, Rowv = NA, scale="column")
+}
+
+na_plot(ucldf)
+```
+Systematic missing values for 1664 in League season 13/14 and 14/15 due to data collection. 
+Look for data without missing values caused by data collection. Let's first remove these as we are interested in predicting the rating of player given their season's performance in the Champion's league. 
+```{r}
+without_nadf<- ucldf[which(!is.na(ucldf$rating), arr.ind=TRUE),]
+tail(colSums(is.na(without_nadf)))
+```
+Are left with 4069 observations mainly spread from 2015 season to 2020. See that a few variables still maintain a great number of missing values. 
+```{r}
+na_plot(without_nadf)
+summary(without_nadf)
+without_nadf
+```
+Variables with missing data:  directRedCards, shotsFromOutsideTheBox, shotsFromInsideTheBox, possessionWonAttThird, possessionLost, totalChippedPasses, accurateChippedPasses, touches, tacklesWon,tacklesWonPercentage, scoringFrequency, substitutionsIn, totwAppearances, substitutionsOut. 
+
+First let's filter some of them out for convenience. 
+
+
+```{r}
+my.data <- subset(without_nadf, select = - c(directRedCards,shotsFromOutsideTheBox,shotsFromInsideTheBox,possessionWonAttThird,totalChippedPasses,accurateChippedPasses,touches,tacklesWonPercentage,substitutionsIn, scoringFrequency, totwAppearances,substitutionsOut))
+```
+
+
+We raise three main concerns: 
+
+- Missing data manipulation
+- Variable selection 
+- Mixed effects 
+
+
+## First approach
+
+
+### Missing data
+Now before we move on to coarse our model on the data, we want to take care of some of our missing data points. We miss 
+- possessionLost with 1371 data points
+- tacklesWon with 2067 data points
+- scoringFrequency with 1968 data points
+
+```{r}
+colSums(is.na(my.data))
+```
+```{r}
+mis1<- my.data[which(!is.na(my.data$tacklesWon), arr.ind=TRUE),]
+plot(mis1$tacklesWon, mis1$tackles, col='darkorange')
+```
+
+
+
+```{r}
+lmfit <- lm(tacklesWon ~ tackles, data=mis1)
+summary(lmfit)
+plot(mis1$tackles, mis1$tacklesWon, col='darkorange')
+lines(mis1$tackles, lmfit$fitted.values, lty=1, col='deepskyblue', lwd=2)
+title('LM for missing data')
+```
+
+Replacing with values
+```{r}
+mis2 <- my.data[which(is.na(my.data$tacklesWon), arr.ind=TRUE),]
+lpred <- predict(lmfit, mis2)
+my.data[which(is.na(my.data$tacklesWon), arr.ind=TRUE),]["tacklesWon"] = lpred
+```
+
+```{r}
+mis1<- my.data[which(!is.na(my.data$possessionLost), arr.ind=TRUE),]
+plot(mis1$possessionLost, mis1$inaccuratePasses, col='darkorange')
+```
+
+
+```{r}
+lmfit <- lm(possessionLost ~ inaccuratePasses, data=mis1)
+summary(lmfit)
+plot(mis1$inaccuratePasses, mis1$possessionLost, col='darkorange')
+lines(mis1$inaccuratePasses, lmfit$fitted.values, lty=1, col='deepskyblue', lwd=2)
+title('LM for missing data')
+```
+Replacing with values
+```{r}
+mis2 <- my.data[which(is.na(my.data$possessionLost), arr.ind=TRUE),]
+lpred <- predict(lmfit, mis2)
+my.data[which(is.na(my.data$possessionLost), arr.ind=TRUE),]["possessionLost"] = lpred
+```
+
+
+
+### Variable selection 
+We exclude our random effect layer for variable selection and start with a simple linear model.
+For fast variable selection given our amount of variables, we use LASSO regularisation. 
+
+```{r}
+my.data2 <- my.data[,-c(2:5)]
+my.data2 <- na.omit(my.data2)
+
+#summary(my.data2)
+```
+
+
+```{r}
+lasso.fit <- glmnet(my.data2[,-2], my.data2[,2])
+plot(lasso.fit)
+```
+```{r}
+lassoCV.fit <- cv.glmnet(data.matrix(my.data2[,-2]),my.data2[,2], nfolds=10)
+plot(lassoCV.fit)
+```
+```{r}
+c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)
+round(log(c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)),2)
+```
+
+```{r}
+coef(lassoCV.fit, m=lassoCV.fit$lambda.1se)
+```
+This method selects the following variables :
+- accurateLongBallsPercentage
+- shotsOnTarget
+- goalConversionPercentage
+- totalDuelsWonPercentage
+- groundDuelsWonPercentage
+- accuratePassesPercentage
+- inaccuratePasses
+- goalsAssistsSum
+- possessionLost 
+
+
+
+
+### Mixed effects
+
+
+Mixed effects are brought in through the variable "team". Our hypothesis is that there is a fixed effect at levels of teams that adds up to the individual player statistics. We see that there are too many teams for our datapoints. We need to simplify that factor with a factor that indicates the recurrence of the team in UCL championship. This will scind our teams between more established clubs and younger/smaller clubs. 
+
+```{r}
+data_count<- my.data %>% group_by(season.year, team) %>% summarise(length(team))
+```
+
+```{r}
+temp <- count(data_count %>% group_by(team))
+temp[order(-temp$n),]
+temp
+```
+Want to assign the codes for teams 1 to 6 depending on the number of participations at the CL. 
+
+```{r}
+new <- my.data
+new[] <- temp$n[match(unlist(my.data), temp$team)]
+my.data['team_code'] <- new$team
+```
+
+```{r}
+df <- subset(my.data, select= c(rating,season.year,team_code, accurateLongBallsPercentage,shotsOnTarget,goalConversionPercentage,totalDuelsWonPercentage,groundDuelsWonPercentage,accuratePassesPercentage,inaccuratePasses,goalsAssistsSum,possessionLost))
+summary(df)
+```
+
+
+```{r}
+#recode as factor 
+df$team_code <- as.factor(df$team_code)
+contrasts(df$team_code) = contr.sum(6)
+```
+
+```{r}
+df <- subset(df, team_code %in% c(1:6))
+ggplot(df, aes(x=team_code, y=rating, fill=team)) + 
+    geom_boxplot()+ ggtitle("Average player rating per club category")
+```
+
+
+```{r}
+head(df)
+```
+
+```{r}
+attach(df)
+interaction.plot(season.year, team_code, rating, las = 1)
+```
+
+```{r}
+
+```
+
+
+```{r}
+model <- lme(rating ~ accurateLongBallsPercentage+shotsOnTarget+goalConversionPercentage+totalDuelsWonPercentage+groundDuelsWonPercentage+accuratePassesPercentage+inaccuratePasses+goalsAssistsSum+possessionLost, data=df, random= ~ 1| team_code)
+summary(model)
+```
+
+
+
+
+
+

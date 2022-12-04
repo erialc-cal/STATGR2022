@@ -5,70 +5,166 @@ output: html_notebook
 Packages 
 
 ```{r}
-library(zoo)
+install.packages(c("leaps", "faraway"))
+install.packages("olsrr")
+install.packages("ggpubr")
+install.packages("tidyverse")
+install.packages("plotly")
+install.packages("grplasso")
+install.packages("grpreg")
+
 ```
+
+```{r, echo=FALSE}
+library(ggpubr)
+library(gtable)
+library(leaps)
+library(ggplot2)
+library(olsrr)
+library(glmnet)
+library(boot)
+library(GGally)
+library(dplyr)
+library(grplasso)
+library(grpreg)
+library(data.table)
+library(gglasso)
+```
+
+
+
+# Data exploring and preprocessing
+
+
 Pre-processing of the data. 
 
 ```{r}
 ucldf = read.csv("/Users/clairehe/Desktop/UEFA_CL_Player_stats.csv", header=T)
 head(ucldf)
 
-data <- as.matrix(is.na(ucldf))
-for (cols in 1:length(ncol)){
-  data[,cols]<- as.integer(data[,cols])
-}
-heatmap(data,Colv = NA, Rowv = NA, scale="column")
-```
 
-Missing data assessment
-```{r}
-ucldf <- ucldf[ucldf$X !="NA",]
+na_plot <- function(df){
+  data <- as.matrix(is.na(df))
+  for (cols in 1:length(ncol)){
+    data[,cols]<- as.integer(data[,cols])
+  }
+  heatmap(data,Colv = NA, Rowv = NA, scale="column")
+}
+
+na_plot(ucldf)
 ```
+Missing data assessment
 
 ```{r}
 colSums(is.na(ucldf))
 ```
+Systematic missing values for 1664 in League season 13/14 and 14/15 due to data collection. 
+Look for data without missing values caused by data collection. Let's first remove these as we are interested in predicting the rating of player given their season's performance in the Champion's league. 
+```{r}
+without_nadf<- ucldf[which(!is.na(ucldf$rating), arr.ind=TRUE),]
+colSums(is.na(without_nadf))
+
+```
+Are left with 4069 observations mainly spread from 2015 season to 2020. See that a few variables still maintain a great number of missing values. 
+```{r}
+na_plot(without_nadf)
+summary(without_nadf)
+without_nadf
+```
+Variables with missing data:  directRedCards, shotsFromOutsideTheBox, shotsFromInsideTheBox, possessionWonAttThird, possessionLost, totalChippedPasses, accurateChippedPasses, touches, tacklesWon,tacklesWonPercentage, scoringFrequency, substitutionsIn, totwAppearances, substitutionsOut. 
+
+First let's filter them out and use regularisation to perform variable selection. 
+
+
+
 
 ```{r}
-ucldf
+my.data <- without_nadf %>% select(-directRedCards,-shotsFromOutsideTheBox,-shotsFromInsideTheBox,-possessionWonAttThird,-possessionLost,-totalChippedPasses,-accurateChippedPasses,-touches,-tacklesWon,-tacklesWonPercentage,-scoringFrequency,-substitutionsIn, -totwAppearances,-substitutionsOut)
 ```
+
+# using LASSO
+```{r}
+lasso.fit <- glmnet(my.data[,-6], my.data[,6])
+plot(lasso.fit)
+```
+
+```{r}
+lassoCV.fit <- cv.glmnet(data.matrix(my.data[,-6]),my.data[,6], nfolds=10)
+plot(lassoCV.fit)
+```
+
+```{r}
+c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)
+round(log(c(lassoCV.fit$lambda.min,lassoCV.fit$lambda.1se)),2)
+```
+
+```{r}
+coef(lassoCV.fit, m=lassoCV.fit$lambda.min)
+coef(lassoCV.fit, s=lassoCV.fit$lambda.1se )
+```
+
+
+# Using Group LASSO
+Coding group levels
+
+
+```{r}
+my.data$team <- as.factor(my.data$team)
+contrasts(my.data$team) = contr.sum(length(l_un))
+C <- contrasts(my.data$team)
+```
+
+
+```{r}
+contr <- list(team = "contr.sum")
+lambda <- lambdamax(rating ~ ., data = my.data, model = LinReg(), contrasts = contr, center=TRUE, standardize = TRUE) * 0.8^(0:8)
+fit_20 <- grplasso(rating ~ ., data=my.data, model = LinReg(), lambda=lambda, center = TRUE, standardize = TRUE, contrasts = contr)
+```
+```{r}
+fit_20
+```
+```{r}
+summary(fit_20)
+```
+
+### Alternative 2
+```{r}
+my.data = cbind(my.data, as.data.frame(model.matrix(my.data$rating ~ my.data$team)))
+my.data <- subset(my.data, select=-team)
+```
+
+```{r}
+group <- colnames(my.data[ , grep("team", colnames(my.data))])
+fit <- grpreg(matrix(my.data[,-6]), my.data[,6], group, penalty="grLasso")
+```
+### Alternative 3
+
+```{r}
+# group index for X variables
+l_un <- unique(my.data$team)
+newvals <- c(1:length(l_un))
+index_l <- newvals[match(my.data$team, l_un)]
+```
+
+```{r}
+gr_cv <- cv.gglasso(as.matrix(my.data[,-6]), my.data[,6], group=, 
+            loss="ls", pred.loss="L2", 
+            intercept = F, nfolds=5)
+x11(); plot(gr_cv)
+paste(gr_cv$lambda.min, gr_cv$lambda.1se)
+```
+
 
 # Descriptive statistics
 
-```{r}
-summary(panel)
-```
-
-Recode categorical variables 
 
 ```{r}
-panel$POINT_TYPE <- as.factor(panel$POINT_TYPE)
-panel$STATUS <- as.factor(panel$STATUS)
-```
-
-
-```{r}
-fit<- lm(tlimth ~ ., data=tli)
-summary(fit)
-```
-
-
-
-
-
-```{r}
-file <- "/Users/clairehe/Downloads/IST_corrected.txt"
-
-ist_data <- read.table(file, sep=",", header=TRUE)
+num_sub <- ucldf %>% dplyr::select(where(is.numeric))
+ggpairs(num_sub)
 ```
 
 ```{r}
-head(ist_data)
-```
-```{r}
-coln <- c()
-df_ist <- ist_data[, coln]
-
+ggcorr(num_sub, method = c("everything", "pearson")) 
 ```
 
 
